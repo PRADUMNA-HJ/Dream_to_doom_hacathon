@@ -499,21 +499,17 @@ flowchart LR
   * [x] Configure structured JSON system instructions with Gemini (`gemini-3.8-flash`).
   * [x] Connect client `worldApi.ts` with Zod runtime validation and error handling.
   * [x] Implement concurrency request-ID protection in generation controller.
-* [ ] **Phase 2: 3D World Engine (Person 2 - In Progress)**
-  * [ ] Setup R3F Canvas and Drei orbital/first-person controls.
-  * [ ] Integrate Rapier physics world and player collision body.
-  * [ ] Build dynamic entity instancer mapping JSON keys to GLTF assets.
-* [ ] **Phase 3: Voice & Sensory Engine (Person 3 - In Progress)**
-  * [ ] Implement Web Speech API wrapper with continuous recognition.
-  * [ ] Create Tone.js ambient synthesizer connected to `audioMood` parameters.
-  * [ ] Add dynamic sound effects for object collisions and triggers.
-* [ ] **Phase 5: System Integration (Full Team)**
-  * [ ] Wire microphone transcripts into Zustand $\rightarrow$ API call $\rightarrow$ 3D world update.
-  * [ ] Test real-time world transitions without memory leaks.
-* [ ] **Phase 6: Live Demo & Optimization**
-  * [ ] Implement Cinematic HUD and `performance.now()` stopwatch.
-  * [ ] Add transition particle animations and lighting fades.
-  * [ ] Complete hackathon presentation rehearsal.
+* [x] **Phase 3: Complete Application Integration & Final Demo (Phase 3 Complete)**
+  * [x] Integrate React Three Fiber `<Canvas>` with Rapier physics engine.
+  * [x] Implement procedural 3D asset registry for all 10 allowlisted primitives.
+  * [x] Integrate Web Speech API speech controller with browser capability detection and fallback.
+  * [x] Integrate Tone.js polyphonic audio engine with mood scaling and game event SFX.
+  * [x] Build futuristic Generation HUD with monotonic `performance.now()` stopwatch timer.
+  * [x] Implement multi-consumer Game Event Bus avoiding cross-consumer event loss.
+  * [x] Create seamless world transition lifecycle and loading overlays.
+* [ ] **Final Polish & Rehearsal**
+  * [ ] Add custom author-modeled GLTF assets to `/public/models/`.
+  * [ ] Rehearse live 3-step demo sequence with judges.
 
 ---
 

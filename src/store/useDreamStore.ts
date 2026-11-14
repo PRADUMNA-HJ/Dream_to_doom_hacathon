@@ -3,6 +3,27 @@ import type { WorldSpec, GameEvent, GameEventType } from '../shared/schemas/worl
 
 export type GenerationStatus = 'idle' | 'generating' | 'validating' | 'success' | 'error';
 
+export type LifecyclePhase =
+  | 'idle'
+  | 'listening'
+  | 'transcript-ready'
+  | 'generating'
+  | 'validating'
+  | 'loading-assets'
+  | 'initializing-scene'
+  | 'initializing-physics'
+  | 'ready'
+  | 'playing'
+  | 'paused'
+  | 'error';
+
+export interface TelemetryLogItem {
+  id: string;
+  timestamp: number;
+  stage: string;
+  message: string;
+}
+
 export interface VoiceInputState {
   transcript: string;
   isListening: boolean;
@@ -11,11 +32,16 @@ export interface VoiceInputState {
 
 export interface WorldGenerationState {
   world: WorldSpec | null;
+  worldRevision: number;
   generationStatus: GenerationStatus;
+  lifecyclePhase: LifecyclePhase;
   generationError: string | null;
   requestId: string | null;
   generationStartedAt: number | null;
   generationCompletedAt: number | null;
+  isSceneReady: boolean;
+  isPhysicsReady: boolean;
+  telemetryLogs: TelemetryLogItem[];
 }
 
 export interface GameplayState {
@@ -25,7 +51,17 @@ export interface GameplayState {
   playerHealth: number;
 }
 
-export interface DreamStoreState extends VoiceInputState, WorldGenerationState, GameplayState {
+export interface AudioSystemState {
+  isAudioInitialized: boolean;
+  isMuted: boolean;
+  audioVolume: number;
+}
+
+export interface DreamStoreState
+  extends VoiceInputState,
+    WorldGenerationState,
+    GameplayState,
+    AudioSystemState {
   // Bounded event log (non-destructive for multiple consumers)
   activeEvents: GameEvent[];
 
@@ -35,12 +71,26 @@ export interface DreamStoreState extends VoiceInputState, WorldGenerationState, 
   setSpeechError: (error: string | null) => void;
   clearTranscript: () => void;
 
-  // World Generation Actions (Person 1 / Controller)
+  // World Generation & Lifecycle Actions
   beginGeneration: (requestId: string) => void;
   setGenerationStatus: (status: GenerationStatus) => void;
+  setLifecyclePhase: (phase: LifecyclePhase) => void;
   setWorld: (world: WorldSpec, responseRequestId: string) => boolean;
   failGeneration: (error: string, responseRequestId: string) => boolean;
   resetGeneration: () => void;
+
+  // Handshake signals from 3D & Physics (Person 2)
+  notifySceneReady: (revision: number) => boolean;
+  notifyPhysicsReady: (revision: number) => boolean;
+
+  // Telemetry & Stage Logging
+  addTelemetryLog: (stage: string, message: string) => void;
+  clearTelemetryLogs: () => void;
+
+  // Audio Controls (Person 3)
+  setAudioInitialized: (initialized: boolean) => void;
+  setMuted: (muted: boolean) => void;
+  setAudioVolume: (volume: number) => void;
 
   // Gameplay Actions (Person 2 / Integrator)
   startGame: () => void;
@@ -50,7 +100,7 @@ export interface DreamStoreState extends VoiceInputState, WorldGenerationState, 
   setPlayerHealth: (health: number | ((prev: number) => number)) => void;
   resetGame: () => void;
 
-  // Event System (Broadcast to Person 2 and Person 3)
+  // Multi-Consumer Event System
   emitEvent: (
     event: Omit<GameEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: number }
   ) => GameEvent;
@@ -62,6 +112,7 @@ export interface DreamStoreState extends VoiceInputState, WorldGenerationState, 
 }
 
 const MAX_EVENT_LOG_SIZE = 50;
+const MAX_TELEMETRY_LOG_SIZE = 50;
 
 export const useDreamStore = create<DreamStoreState>((set, get) => ({
   // Voice Input State
@@ -71,11 +122,16 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
 
   // World Generation State
   world: null,
+  worldRevision: 0,
   generationStatus: 'idle',
+  lifecyclePhase: 'idle',
   generationError: null,
   requestId: null,
   generationStartedAt: null,
   generationCompletedAt: null,
+  isSceneReady: false,
+  isPhysicsReady: false,
+  telemetryLogs: [],
 
   // Gameplay State
   isGameStarted: false,
@@ -83,45 +139,95 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   score: 0,
   playerHealth: 100,
 
+  // Audio System State
+  isAudioInitialized: false,
+  isMuted: false,
+  audioVolume: 0.75,
+
   // Event Log
   activeEvents: [],
 
   // Voice Input Actions
-  setTranscript: (transcript) => set({ transcript, speechError: null }),
-  setListening: (isListening) => set({ isListening }),
-  setSpeechError: (speechError) => set({ speechError, isListening: false }),
-  clearTranscript: () => set({ transcript: '' }),
+  setTranscript: (transcript) =>
+    set({
+      transcript,
+      speechError: null,
+      lifecyclePhase: transcript.trim().length > 0 ? 'transcript-ready' : 'idle',
+    }),
+
+  setListening: (isListening) =>
+    set((state) => ({
+      isListening,
+      lifecyclePhase: isListening ? 'listening' : state.lifecyclePhase,
+    })),
+
+  setSpeechError: (speechError) =>
+    set({
+      speechError,
+      isListening: false,
+      lifecyclePhase: speechError ? 'error' : 'idle',
+    }),
+
+  clearTranscript: () => set({ transcript: '', lifecyclePhase: 'idle' }),
 
   // World Generation Actions with Concurrency Protection
-  beginGeneration: (requestId) =>
+  beginGeneration: (requestId) => {
+    const startedAt = Date.now();
+    get().addTelemetryLog('generation-request-started', 'Sending Scene Graph generation request...');
+
     set({
       requestId,
       generationStatus: 'generating',
+      lifecyclePhase: 'generating',
       generationError: null,
-      generationStartedAt: Date.now(),
+      generationStartedAt: startedAt,
       generationCompletedAt: null,
-    }),
+      isSceneReady: false,
+      isPhysicsReady: false,
+    });
+  },
 
-  setGenerationStatus: (generationStatus) => set({ generationStatus }),
+  setGenerationStatus: (generationStatus) =>
+    set((state) => ({
+      generationStatus,
+      lifecyclePhase:
+        generationStatus === 'generating'
+          ? 'generating'
+          : generationStatus === 'validating'
+          ? 'validating'
+          : generationStatus === 'error'
+          ? 'error'
+          : state.lifecyclePhase,
+    })),
+
+  setLifecyclePhase: (lifecyclePhase) => set({ lifecyclePhase }),
 
   setWorld: (world, responseRequestId) => {
     const currentRequestId = get().requestId;
-    // Strict concurrency guard: ignore stale/outdated async responses
     if (responseRequestId !== currentRequestId) {
       return false;
     }
 
+    const nextRevision = get().worldRevision + 1;
+    get().addTelemetryLog('ai-response-received', `World generated: "${world.title}" (${world.biome}).`);
+    get().addTelemetryLog('schema-validation-completed', `Scene graph validated with ${world.entities.length} entities.`);
+    get().addTelemetryLog('loading-assets', 'Hydrating 3D primitives and colliders...');
+
     set({
       world,
+      worldRevision: nextRevision,
       generationStatus: 'success',
+      lifecyclePhase: 'loading-assets',
       generationError: null,
       generationCompletedAt: Date.now(),
+      isSceneReady: false,
+      isPhysicsReady: false,
     });
 
     // Automatically emit event for Person 2 and Person 3
     get().emitEvent({
       type: 'world-generated' as GameEventType,
-      payload: { worldId: world.id, title: world.title, biome: world.biome },
+      payload: { worldId: world.id, title: world.title, biome: world.biome, revision: nextRevision },
     });
 
     return true;
@@ -133,8 +239,11 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       return false;
     }
 
+    get().addTelemetryLog('generation-failed', `Generation error: ${error}`);
+
     set({
       generationStatus: 'error',
+      lifecyclePhase: 'error',
       generationError: error,
       generationCompletedAt: Date.now(),
     });
@@ -145,16 +254,73 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   resetGeneration: () =>
     set({
       generationStatus: 'idle',
+      lifecyclePhase: 'idle',
       generationError: null,
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      isSceneReady: false,
+      isPhysicsReady: false,
     }),
 
+  // Handshake signals from 3D & Physics (Person 2)
+  notifySceneReady: (revision) => {
+    if (revision !== get().worldRevision) return false;
+    get().addTelemetryLog('scene-mounted', '3D Scene Canvas mounted and rendered.');
+    set({ isSceneReady: true });
+
+    if (get().isPhysicsReady) {
+      get().addTelemetryLog('world-ready', 'Exploration ready. Collision hulls initialized.');
+      set({ lifecyclePhase: 'ready', isGameStarted: true });
+    }
+    return true;
+  },
+
+  notifyPhysicsReady: (revision) => {
+    if (revision !== get().worldRevision) return false;
+    get().addTelemetryLog('physics-ready', 'Rapier physics world initialized.');
+    set({ isPhysicsReady: true });
+
+    if (get().isSceneReady) {
+      get().addTelemetryLog('world-ready', 'Exploration ready. Collision hulls initialized.');
+      set({ lifecyclePhase: 'ready', isGameStarted: true });
+    }
+    return true;
+  },
+
+  // Telemetry Log System
+  addTelemetryLog: (stage, message) => {
+    const newLog: TelemetryLogItem = {
+      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: Date.now(),
+      stage,
+      message,
+    };
+
+    set((state) => ({
+      telemetryLogs: [newLog, ...state.telemetryLogs].slice(0, MAX_TELEMETRY_LOG_SIZE),
+    }));
+  },
+
+  clearTelemetryLogs: () => set({ telemetryLogs: [] }),
+
+  // Audio System Actions
+  setAudioInitialized: (isAudioInitialized) => set({ isAudioInitialized }),
+  setMuted: (isMuted) => set({ isMuted }),
+  setAudioVolume: (audioVolume) => set({ audioVolume: Math.max(0, Math.min(1, audioVolume)) }),
+
   // Gameplay Actions
-  startGame: () => set({ isGameStarted: true, isPaused: false, playerHealth: 100, score: 0 }),
-  pauseGame: () => set({ isPaused: true }),
-  resumeGame: () => set({ isPaused: false }),
+  startGame: () =>
+    set({
+      isGameStarted: true,
+      isPaused: false,
+      playerHealth: 100,
+      score: 0,
+      lifecyclePhase: 'playing',
+    }),
+
+  pauseGame: () => set({ isPaused: true, lifecyclePhase: 'paused' }),
+  resumeGame: () => set({ isPaused: false, lifecyclePhase: 'playing' }),
 
   setScore: (scoreOrUpdater) =>
     set((state) => ({
@@ -170,7 +336,6 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       const clampedHealth = Math.max(0, Math.min(100, nextHealth));
 
       if (clampedHealth === 0 && state.playerHealth > 0) {
-        // Emit game-over event
         get().emitEvent({ type: 'game-over' });
       }
 
@@ -183,6 +348,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       isPaused: false,
       score: 0,
       playerHealth: 100,
+      lifecyclePhase: 'idle',
     }),
 
   // Non-destructive Bounded Event Log System
@@ -207,11 +373,16 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   resetWorld: () =>
     set({
       world: null,
+      worldRevision: 0,
       generationStatus: 'idle',
+      lifecyclePhase: 'idle',
       generationError: null,
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      isSceneReady: false,
+      isPhysicsReady: false,
+      telemetryLogs: [],
     }),
 
   resetSession: () =>
@@ -220,15 +391,20 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       isListening: false,
       speechError: null,
       world: null,
+      worldRevision: 0,
       generationStatus: 'idle',
+      lifecyclePhase: 'idle',
       generationError: null,
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      isSceneReady: false,
+      isPhysicsReady: false,
       isGameStarted: false,
       isPaused: false,
       score: 0,
       playerHealth: 100,
       activeEvents: [],
+      telemetryLogs: [],
     }),
 }));
