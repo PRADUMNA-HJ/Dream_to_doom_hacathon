@@ -14,6 +14,10 @@ export interface GenerateWorldSuccessResponse {
   success: true;
   world: WorldSpec;
   generationTimeMs: number;
+  data?: {
+    world: WorldSpec;
+    generationTimeMs: number;
+  };
 }
 
 export interface GenerateWorldErrorResponse {

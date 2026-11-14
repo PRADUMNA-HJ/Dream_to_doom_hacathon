@@ -490,22 +490,23 @@ flowchart LR
     P5 --> P6["Phase 6: Polish\n(HUD & Live Demo)"]
 ```
 
-* [x] **Phase 1: Project Foundation & Contracts (Current - V_1)**
+* [x] **Phase 1: Project Foundation & Contracts (Complete - V_1)**
   * [x] Initialize Git repository and domain workflow.
   * [x] Define TypeScript interfaces and Zod Scene Graph schemas.
   * [x] Author comprehensive architecture documentation.
-* [ ] **Phase 2: 3D World Engine (Person 2)**
+* [x] **AI Generation Engine (Person 1 - Phase 2 Complete)**
+  * [x] Implement serverless `/api/generate-world.ts` with `@google/genai`.
+  * [x] Configure structured JSON system instructions with Gemini (`gemini-3.8-flash`).
+  * [x] Connect client `worldApi.ts` with Zod runtime validation and error handling.
+  * [x] Implement concurrency request-ID protection in generation controller.
+* [ ] **Phase 2: 3D World Engine (Person 2 - In Progress)**
   * [ ] Setup R3F Canvas and Drei orbital/first-person controls.
   * [ ] Integrate Rapier physics world and player collision body.
   * [ ] Build dynamic entity instancer mapping JSON keys to GLTF assets.
-* [ ] **Phase 3: Voice & Sensory Engine (Person 3)**
+* [ ] **Phase 3: Voice & Sensory Engine (Person 3 - In Progress)**
   * [ ] Implement Web Speech API wrapper with continuous recognition.
   * [ ] Create Tone.js ambient synthesizer connected to `audioMood` parameters.
   * [ ] Add dynamic sound effects for object collisions and triggers.
-* [ ] **Phase 4: AI Generation Engine (Person 1)**
-  * [ ] Implement `/api/generate-world.ts` with `@google/genai`.
-  * [ ] Configure structured JSON system instructions with Gemini.
-  * [ ] Connect client `worldApi.ts` with error handling and fallback presets.
 * [ ] **Phase 5: System Integration (Full Team)**
   * [ ] Wire microphone transcripts into Zustand $\rightarrow$ API call $\rightarrow$ 3D world update.
   * [ ] Test real-time world transitions without memory leaks.

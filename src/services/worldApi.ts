@@ -100,7 +100,11 @@ export async function generateWorld(
     }
 
     const apiResponse = rawJson as GenerateWorldApiResponse;
-    if (!apiResponse.success || !apiResponse.world) {
+    const extractedWorld = apiResponse.success
+      ? (apiResponse.world ?? apiResponse.data?.world)
+      : null;
+
+    if (!apiResponse.success || !extractedWorld) {
       throw new WorldApiError(
         'Server indicated failure or returned missing world data.',
         'INVALID_API_RESPONSE',
@@ -109,7 +113,7 @@ export async function generateWorld(
     }
 
     // Strict runtime validation through Zod
-    const validationResult = WorldSpecSchema.safeParse(apiResponse.world);
+    const validationResult = WorldSpecSchema.safeParse(extractedWorld);
     if (!validationResult.success) {
       throw new WorldApiError(
         `Generated scene graph failed schema validation: ${validationResult.error.issues.map((i) => i.message).join('; ')}`,

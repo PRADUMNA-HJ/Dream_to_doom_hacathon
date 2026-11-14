@@ -1,6 +1,6 @@
-# Dream-to-Doom — Integration Contract (Phase 1)
+# Dream-to-Doom — Integration Contract (Phase 1 & Phase 2)
 
-This document serves as the single source of truth for communication contracts between the AI output, the Zustand global state store, and the feature domains owned by Person 2 (3D Graphics) and Person 3 (Sensory/Audio).
+This document serves as the single source of truth for communication contracts between the AI output, the serverless generation endpoint, the Zustand global state store, and the feature domains owned by Person 2 (3D Graphics) and Person 3 (Sensory/Audio).
 
 ---
 
