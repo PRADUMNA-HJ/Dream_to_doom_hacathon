@@ -9,14 +9,8 @@
 import React, { useState, useCallback, useEffect, useId } from 'react';
 import {
   initializeAudio,
-  setVolume,
-  getVolume,
-  muteAudio,
-  unmuteAudio,
   isAudioInitialized,
-  getAudioStatus,
   setMasterVolume,
-  getMasterVolume,
   muteMasterAudio,
   unmuteMasterAudio,
   getMasterAudioStatus,

@@ -9,7 +9,12 @@ declare module 'tone' {
   export function now(): number;
   export function gainToDb(gain: number): number;
   export function dbToGain(db: number): number;
-  export function getDestination(): ToneAudioNode;
+
+  export interface DestinationNode extends ToneAudioNode {
+    mute: boolean;
+    volume: Param<number>;
+  }
+  export function getDestination(): DestinationNode;
 
   export const context: {
     state: 'suspended' | 'running' | 'closed';
@@ -52,13 +57,19 @@ declare module 'tone' {
     threshold: Param<number>;
   }
 
+  export class Reverb extends ToneAudioNode {
+    constructor(options?: number | { decay?: number; preDelay?: number; wet?: number });
+    decay: number;
+    generate(): Promise<this>;
+  }
+
   export class Filter extends ToneAudioNode {
     constructor(
       frequency?: number | { frequency?: number; type?: string; Q?: number; rolloff?: number },
       type?: string,
       rolloff?: number
     );
-    frequency: Param<number>;
+    frequency: Param<number> & { rampTo: (val: number, time?: number) => void };
     Q: Param<number>;
     type: string;
   }
@@ -90,8 +101,14 @@ declare module 'tone' {
     volume: Param<number>;
   }
 
-  export class PolySynth extends ToneAudioNode {
+  export class NoiseSynth extends ToneAudioNode {
     constructor(options?: unknown);
+    triggerAttackRelease(duration: string | number, time?: number, velocity?: number): this;
+    volume: Param<number>;
+  }
+
+  export class PolySynth<SubVoice = Synth> extends ToneAudioNode {
+    constructor(voice?: unknown, options?: unknown);
     triggerAttackRelease(
       notes: string | string[],
       duration: string | number,
@@ -106,6 +123,7 @@ declare module 'tone' {
 
   export class Synth extends ToneAudioNode {
     constructor(options?: unknown);
+    frequency: Param<number> & { exponentialRampTo: (val: string | number, time?: number, startTime?: number) => void };
     triggerAttackRelease(note: string, duration: string | number, time?: number, velocity?: number): this;
     triggerAttack(note: string, time?: number, velocity?: number): this;
     triggerRelease(time?: number): this;
