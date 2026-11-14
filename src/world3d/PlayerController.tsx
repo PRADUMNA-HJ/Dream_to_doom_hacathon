@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { RigidBody, type RapierRigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
 import { eventBus } from '../shared/events/eventBus';
+import { useDreamStore } from '../store/useDreamStore';
 
 interface PlayerControllerProps {
   spawnPoint: { x: number; y: number; z: number };
@@ -11,6 +12,10 @@ interface PlayerControllerProps {
 export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }) => {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const { camera } = useThree();
+
+  const lifecyclePhase = useDreamStore((state) => state.lifecyclePhase);
+  const isPaused = useDreamStore((state) => state.isPaused);
+  const playerHealth = useDreamStore((state) => state.playerHealth);
 
   const keys = useRef<{ [key: string]: boolean }>({});
 
@@ -23,6 +28,12 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
       ) {
         return;
       }
+
+      // Prevent page scrolling when Space is pressed for gameplay jump
+      if (e.code === 'Space') {
+        e.preventDefault();
+      }
+
       keys.current[e.code] = true;
     };
 
@@ -42,8 +53,21 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
   useFrame(() => {
     if (!rigidBodyRef.current) return;
 
-    const speed = 7.0;
+    // Disabled movement during loading, pause, or death
+    const isPlayable =
+      (lifecyclePhase === 'ready' || lifecyclePhase === 'playing') &&
+      !isPaused &&
+      playerHealth > 0;
+
     const linvel = rigidBodyRef.current.linvel();
+
+    if (!isPlayable) {
+      // Retain vertical gravity velocity but zero out horizontal velocity
+      rigidBodyRef.current.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
+      return;
+    }
+
+    const speed = 7.0;
     let moveX = 0;
     let moveZ = 0;
 

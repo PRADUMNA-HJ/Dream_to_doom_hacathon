@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import type { AssetType } from '../shared/schemas/worldSchema';
+import type { AssetType, PhysicsType, InteractionType } from '../shared/schemas/worldSchema';
 import { useFrame } from '@react-three/fiber';
 import type * as THREE from 'three';
 
@@ -195,4 +195,134 @@ export const ProceduralAsset: React.FC<ProceduralAssetProps> = ({ asset, color }
         </mesh>
       );
   }
+};
+
+export interface AssetDefinition {
+  type: AssetType;
+  name: string;
+  collider: 'ball' | 'cuboid' | 'hull';
+  defaultPhysics: PhysicsType;
+  defaultInteraction: InteractionType;
+  defaultScale: { x: number; y: number; z: number };
+  description: string;
+}
+
+export const ASSET_DEFINITIONS: Record<AssetType, AssetDefinition> = {
+  tree: {
+    type: 'tree',
+    name: 'Conifer Tree',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Trunk and double canopy foliage cones with castShadow',
+  },
+  rock: {
+    type: 'rock',
+    name: 'Granite Boulder',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Polyhedral dodecahedron rock geometry',
+  },
+  house: {
+    type: 'house',
+    name: 'Alpine Cottage',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Timber box base with 45° pitched pyramidal roof',
+  },
+  portal: {
+    type: 'portal',
+    name: 'Mystic Gateway',
+    collider: 'cuboid',
+    defaultPhysics: 'sensor',
+    defaultInteraction: 'portal',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Emissive rotating torus ring with swirl disc',
+  },
+  crystal: {
+    type: 'crystal',
+    name: 'Aether Crystal',
+    collider: 'ball',
+    defaultPhysics: 'sensor',
+    defaultInteraction: 'collectible',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Floating octahedron crystal with cyan emissive glow',
+  },
+  enemy: {
+    type: 'enemy',
+    name: 'Hazard Drone',
+    collider: 'ball',
+    defaultPhysics: 'dynamic',
+    defaultInteraction: 'hazard',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Icosahedron hazard bot with crimson emissive core',
+  },
+  platform: {
+    type: 'platform',
+    name: 'Floating Deck',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Flattened 3x0.5x3 box platform',
+  },
+  mushroom: {
+    type: 'mushroom',
+    name: 'Giant Fungi',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Cylindrical stipe with hemisphere fungal cap',
+  },
+  lamp: {
+    type: 'lamp',
+    name: 'Street Lantern',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Iron lamppost with dynamic point light and emissive bulb',
+  },
+  cloud: {
+    type: 'cloud',
+    name: 'Cumulus Formation',
+    collider: 'cuboid',
+    defaultPhysics: 'fixed',
+    defaultInteraction: 'none',
+    defaultScale: { x: 1, y: 1, z: 1 },
+    description: 'Cluster of translucent spheres with float animation',
+  },
+};
+
+/**
+ * Central Asset Registry satisfying Part 14 interface requirements.
+ */
+export const AssetRegistry = {
+  getAssetRenderer: (assetType: AssetType): React.FC<{ color?: string }> => {
+    return ({ color }: { color?: string }) => <ProceduralAsset asset={assetType} color={color} />;
+  },
+  getAssetCollider: (assetType: AssetType): 'ball' | 'cuboid' | 'hull' => {
+    return ASSET_DEFINITIONS[assetType]?.collider ?? 'cuboid';
+  },
+  getDefaultPhysics: (assetType: AssetType): PhysicsType => {
+    return ASSET_DEFINITIONS[assetType]?.defaultPhysics ?? 'fixed';
+  },
+  getDefaultInteraction: (assetType: AssetType): InteractionType => {
+    return ASSET_DEFINITIONS[assetType]?.defaultInteraction ?? 'none';
+  },
+  getDefaultScale: (assetType: AssetType): { x: number; y: number; z: number } => {
+    return ASSET_DEFINITIONS[assetType]?.defaultScale ?? { x: 1, y: 1, z: 1 };
+  },
+  getDefinition: (assetType: AssetType): AssetDefinition | undefined => {
+    return ASSET_DEFINITIONS[assetType];
+  },
+  getAllTypes: (): AssetType[] => {
+    return Object.keys(ASSET_DEFINITIONS) as AssetType[];
+  },
 };

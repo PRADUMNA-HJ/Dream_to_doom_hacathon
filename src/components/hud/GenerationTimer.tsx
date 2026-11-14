@@ -4,6 +4,7 @@ import { useDreamStore } from '../../store/useDreamStore';
 export const GenerationTimer: React.FC = () => {
   const lifecyclePhase = useDreamStore((state) => state.lifecyclePhase);
   const generationStartedAt = useDreamStore((state) => state.generationStartedAt);
+  const serverGenerationTimeMs = useDreamStore((state) => state.serverGenerationTimeMs);
   const [displayTime, setDisplayTime] = useState('00:00.000');
   const animFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -69,14 +70,19 @@ export const GenerationTimer: React.FC = () => {
   if (!isTimerActive) return null;
 
   return (
-    <div className="flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-cyan-800/60 shadow-lg">
+    <div className="flex items-center gap-2.5 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-cyan-800/60 shadow-lg">
       <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
       <span className="text-xs font-mono font-medium text-slate-400 uppercase tracking-wider">
-        Latency:
+        Playable:
       </span>
       <span className="font-mono text-sm font-bold tracking-widest text-cyan-300">
         {displayTime}
       </span>
+      {serverGenerationTimeMs !== null && (
+        <span className="text-[11px] font-mono text-indigo-400 border-l border-slate-700/80 pl-2">
+          AI: <span className="text-indigo-200 font-semibold">{serverGenerationTimeMs}ms</span>
+        </span>
+      )}
     </div>
   );
 };

@@ -39,6 +39,7 @@ export interface WorldGenerationState {
   requestId: string | null;
   generationStartedAt: number | null;
   generationCompletedAt: number | null;
+  serverGenerationTimeMs: number | null;
   isSceneReady: boolean;
   isPhysicsReady: boolean;
   telemetryLogs: TelemetryLogItem[];
@@ -49,6 +50,7 @@ export interface GameplayState {
   isPaused: boolean;
   score: number;
   playerHealth: number;
+  collectedEntityIds: string[];
 }
 
 export interface AudioSystemState {
@@ -75,7 +77,7 @@ export interface DreamStoreState
   beginGeneration: (requestId: string) => void;
   setGenerationStatus: (status: GenerationStatus) => void;
   setLifecyclePhase: (phase: LifecyclePhase) => void;
-  setWorld: (world: WorldSpec, responseRequestId: string) => boolean;
+  setWorld: (world: WorldSpec, responseRequestId: string, serverGenerationTimeMs?: number) => boolean;
   failGeneration: (error: string, responseRequestId: string) => boolean;
   resetGeneration: () => void;
 
@@ -98,6 +100,8 @@ export interface DreamStoreState
   resumeGame: () => void;
   setScore: (score: number | ((prev: number) => number)) => void;
   setPlayerHealth: (health: number | ((prev: number) => number)) => void;
+  collectEntity: (entityId: string) => boolean;
+  restartGame: () => void;
   resetGame: () => void;
 
   // Multi-Consumer Event System
@@ -129,6 +133,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   requestId: null,
   generationStartedAt: null,
   generationCompletedAt: null,
+  serverGenerationTimeMs: null,
   isSceneReady: false,
   isPhysicsReady: false,
   telemetryLogs: [],
@@ -138,6 +143,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   isPaused: false,
   score: 0,
   playerHealth: 100,
+  collectedEntityIds: [],
 
   // Audio System State
   isAudioInitialized: false,
@@ -202,7 +208,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
 
   setLifecyclePhase: (lifecyclePhase) => set({ lifecyclePhase }),
 
-  setWorld: (world, responseRequestId) => {
+  setWorld: (world, responseRequestId, serverGenerationTimeMs) => {
     const currentRequestId = get().requestId;
     if (responseRequestId !== currentRequestId) {
       return false;
@@ -220,6 +226,8 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       lifecyclePhase: 'loading-assets',
       generationError: null,
       generationCompletedAt: Date.now(),
+      serverGenerationTimeMs: serverGenerationTimeMs ?? null,
+      collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
     });
@@ -329,18 +337,58 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
 
   setPlayerHealth: (healthOrUpdater) =>
     set((state) => {
+      // Disallow damage if already dead / game over
+      if (state.playerHealth <= 0) {
+        return state;
+      }
       const nextHealth =
         typeof healthOrUpdater === 'function'
           ? healthOrUpdater(state.playerHealth)
           : healthOrUpdater;
-      const clampedHealth = Math.max(0, Math.min(100, nextHealth));
+      const clampedHealth = Math.max(0, Math.min(100, isNaN(nextHealth) ? 0 : nextHealth));
 
       if (clampedHealth === 0 && state.playerHealth > 0) {
         get().emitEvent({ type: 'game-over' });
+        return { playerHealth: 0, isGameStarted: false };
       }
 
       return { playerHealth: clampedHealth };
     }),
+
+  collectEntity: (entityId) => {
+    const state = get();
+    if (state.collectedEntityIds.includes(entityId)) {
+      return false; // Reject duplicate collection
+    }
+
+    set({
+      collectedEntityIds: [...state.collectedEntityIds, entityId],
+      score: state.score + 10,
+    });
+
+    get().emitEvent({
+      type: 'item-collected' as GameEventType,
+      payload: { entityId, points: 10 },
+    });
+
+    return true;
+  },
+
+  restartGame: () => {
+    set({
+      playerHealth: 100,
+      score: 0,
+      collectedEntityIds: [],
+      isGameStarted: true,
+      isPaused: false,
+      lifecyclePhase: 'ready',
+    });
+
+    get().emitEvent({
+      type: 'game-started' as GameEventType,
+      payload: { action: 'restart' },
+    });
+  },
 
   resetGame: () =>
     set({
@@ -348,6 +396,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       isPaused: false,
       score: 0,
       playerHealth: 100,
+      collectedEntityIds: [],
       lifecyclePhase: 'idle',
     }),
 
@@ -380,6 +429,8 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      serverGenerationTimeMs: null,
+      collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
       telemetryLogs: [],
@@ -398,6 +449,8 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      serverGenerationTimeMs: null,
+      collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
       isGameStarted: false,

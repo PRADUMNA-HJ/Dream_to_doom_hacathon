@@ -2,6 +2,51 @@ import * as Tone from 'tone';
 import type { AudioMood, GameEventType } from '../shared/schemas/worldSchema';
 import { useDreamStore } from '../store/useDreamStore';
 
+/**
+ * Root note and scale configurations satisfying Part 10 requirements.
+ * Root note: C3 (MIDI 48, ~130.81 Hz).
+ */
+export const ROOT_NOTE = 'C3';
+export const ROOT_FREQUENCY_HZ = 130.81;
+
+/**
+ * Dream profile: Major Pentatonic
+ * Semitones: [0, 2, 4, 7, 9] relative to root
+ */
+export const MAJOR_PENTATONIC_SEMITONES = [0, 2, 4, 7, 9] as const;
+
+/**
+ * Doom profile: Half-Whole Diminished (Octatonic)
+ * Semitones: [0, 1, 3, 4, 6, 7, 9, 10] relative to root
+ */
+export const HALF_WHOLE_DIMINISHED_SEMITONES = [0, 1, 3, 4, 6, 7, 9, 10] as const;
+
+/**
+ * Calculates equal-tempered frequency in Hertz from a root frequency and semitone offset.
+ * f = f_0 * 2^(semitone / 12)
+ */
+export function semitoneToFrequency(rootHz: number, semitone: number): number {
+  return Number((rootHz * Math.pow(2, semitone / 12)).toFixed(2));
+}
+
+export function getScaleFrequencies(rootHz: number, intervals: readonly number[]): number[] {
+  return intervals.map((semitone) => semitoneToFrequency(rootHz, semitone));
+}
+
+/**
+ * Maps WorldSpec audioMood to canonical music profile (Dream vs Doom).
+ */
+export function getMusicProfileForMood(mood: AudioMood): 'dream' | 'doom' {
+  switch (mood) {
+    case 'calm':
+    case 'mystical':
+      return 'dream';
+    case 'tense':
+    case 'chaotic':
+      return 'doom';
+  }
+}
+
 export class SoundEngine {
   private isInitialized: boolean = false;
   private isMuted: boolean = false;
@@ -11,7 +56,15 @@ export class SoundEngine {
   private reverb: Tone.Reverb | null = null;
   private filter: Tone.Filter | null = null;
   private currentMood: AudioMood = 'calm';
-  private loopIntervalId: number | null = null;
+  private loopIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  public getCurrentMood(): AudioMood {
+    return this.currentMood;
+  }
+
+  public getActiveProfile(): 'dream' | 'doom' {
+    return getMusicProfileForMood(this.currentMood);
+  }
 
   /**
    * Initializes Tone.js AudioContext upon an explicit user gesture.
@@ -71,7 +124,7 @@ export class SoundEngine {
     if (!this.isInitialized || this.isMuted || !this.ambientSynth) return;
 
     if (this.loopIntervalId) {
-      window.clearInterval(this.loopIntervalId);
+      clearInterval(this.loopIntervalId);
       this.loopIntervalId = null;
     }
 
@@ -114,7 +167,7 @@ export class SoundEngine {
     };
 
     playNextChord();
-    this.loopIntervalId = window.setInterval(playNextChord, intervalMs);
+    this.loopIntervalId = setInterval(playNextChord, intervalMs);
   }
 
   /**
@@ -191,7 +244,7 @@ export class SoundEngine {
 
   public dispose(): void {
     if (this.loopIntervalId) {
-      window.clearInterval(this.loopIntervalId);
+      clearInterval(this.loopIntervalId);
       this.loopIntervalId = null;
     }
     this.ambientSynth?.dispose();

@@ -32,10 +32,10 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-wide">
-                Dream-to-Doom Architecture & Judge Technical Brief
+                Why Scene Graph Generation?
               </h2>
               <p className="text-xs text-slate-400 font-mono">
-                Zero-Backend • Client-Heavy • Structured AI Scene Graph • Sub-3s Latency
+                Architecture Blueprint • Zero-Backend Client Assembly • Sub-3s Latency
               </p>
             </div>
           </div>
@@ -81,6 +81,23 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
                 The core innovation of Dream-to-Doom is zero-backend real-time generation. Instead of generating heavy 3D files on a server, we generate semantic placement contracts and assemble the world instantly in the client browser:
               </p>
 
+              {/* Exact Architecture Flow Diagram */}
+              <div className="bg-slate-950 p-3 rounded-xl border border-cyan-900/60 font-mono text-[11px] text-cyan-300 flex items-center justify-between flex-wrap gap-1">
+                <span>User Prompt</span>
+                <span className="text-slate-500">→</span>
+                <span>Gemini Flash</span>
+                <span className="text-slate-500">→</span>
+                <span>Scene Graph JSON</span>
+                <span className="text-slate-500">→</span>
+                <span>Validation</span>
+                <span className="text-slate-500">→</span>
+                <span>Asset Registry</span>
+                <span className="text-slate-500">→</span>
+                <span>R3F Renderer</span>
+                <span className="text-slate-500">→</span>
+                <span className="text-emerald-400 font-bold">Playable World</span>
+              </div>
+
               {/* Step Sequence Diagram */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                 <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 space-y-1">
@@ -119,6 +136,28 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
                     Instantiates preloaded GLTF models or procedural fallback hulls with <code className="text-cyan-300">@react-three/rapier</code> colliders while <code className="text-cyan-300">Tone.js</code> synthesizes mood audio.
                   </p>
                 </div>
+              </div>
+
+              {/* Illustrative JSON Schema Example */}
+              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
+                <div className="text-[11px] font-mono font-semibold text-slate-300">
+                  Illustrative Scene Graph Contract (JSON Output):
+                </div>
+                <pre className="text-[10px] font-mono text-cyan-300 bg-slate-900/90 p-2.5 rounded-lg overflow-x-auto border border-slate-800">
+{`{
+  "id": "world-enchanted-101",
+  "title": "Enchanted Forest",
+  "biome": "enchanted_forest",
+  "mood": "dream",
+  "audioMood": "calm",
+  "environment": { "skyColor": "#0b1d3a", "groundColor": "#1b4d3e", "fogDensity": 0.04 },
+  "entities": [
+    { "id": "e_tree_1", "asset": "tree", "position": { "x": 6.5, "y": 0, "z": -8.0 }, "scale": { "x": 1.4, "y": 1.8, "z": 1.4 } },
+    { "id": "e_crys_1", "asset": "crystal", "position": { "x": 0.0, "y": 1.0, "z": -4.5 }, "interaction": "collectible" },
+    { "id": "e_port_1", "asset": "portal", "position": { "x": 12.0, "y": 0, "z": 10.0 }, "interaction": "portal" }
+  ]
+}`}
+                </pre>
               </div>
             </div>
           )}

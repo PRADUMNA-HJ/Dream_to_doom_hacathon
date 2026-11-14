@@ -123,4 +123,63 @@ describe('useDreamStore (Zustand Global State)', () => {
     expect(clean.score).toBe(0);
     expect(clean.isGameStarted).toBe(false);
   });
+
+  it('manages single-crystal collection and prevents duplicate scoring (Part 8 & 15.D)', () => {
+    const store = useDreamStore.getState();
+    expect(store.score).toBe(0);
+    expect(store.collectedEntityIds).toEqual([]);
+
+    // First collection of crystal-1: awards +10 points
+    const collected1 = store.collectEntity('crystal-1');
+    expect(collected1).toBe(true);
+    expect(useDreamStore.getState().score).toBe(10);
+    expect(useDreamStore.getState().collectedEntityIds).toContain('crystal-1');
+
+    // Duplicate collection attempt of crystal-1: must be rejected
+    const duplicate = store.collectEntity('crystal-1');
+    expect(duplicate).toBe(false);
+    expect(useDreamStore.getState().score).toBe(10); // Still 10, no double scoring!
+
+    // Collection of another crystal-2: awards another +10 points
+    const collected2 = store.collectEntity('crystal-2');
+    expect(collected2).toBe(true);
+    expect(useDreamStore.getState().score).toBe(20);
+    expect(useDreamStore.getState().collectedEntityIds).toEqual(['crystal-1', 'crystal-2']);
+  });
+
+  it('clamps health >= 0, prevents damage when dead, and triggers game-over (Part 11, 12, 15.E)', () => {
+    const store = useDreamStore.getState();
+    expect(store.playerHealth).toBe(100);
+
+    // Initial damage
+    store.setPlayerHealth((h) => h - 40);
+    expect(useDreamStore.getState().playerHealth).toBe(60);
+
+    // Lethal damage: clamps to 0 (never negative)
+    store.setPlayerHealth((h) => h - 80);
+    expect(useDreamStore.getState().playerHealth).toBe(0);
+    expect(useDreamStore.getState().isGameStarted).toBe(false);
+
+    // Verify game-over event was emitted
+    const events = useDreamStore.getState().activeEvents;
+    expect(events.some((e) => e.type === 'game-over')).toBe(true);
+
+    // Attempting further damage while dead is rejected
+    store.setPlayerHealth((h) => h - 50);
+    expect(useDreamStore.getState().playerHealth).toBe(0);
+  });
+
+  it('handles restartGame by resetting health, score, and collected entities', () => {
+    const store = useDreamStore.getState();
+    store.collectEntity('crystal-1');
+    store.setPlayerHealth(0);
+    expect(useDreamStore.getState().playerHealth).toBe(0);
+
+    store.restartGame();
+    const restarted = useDreamStore.getState();
+    expect(restarted.playerHealth).toBe(100);
+    expect(restarted.score).toBe(0);
+    expect(restarted.collectedEntityIds).toEqual([]);
+    expect(restarted.isGameStarted).toBe(true);
+  });
 });

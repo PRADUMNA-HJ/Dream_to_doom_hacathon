@@ -55,9 +55,10 @@ export async function generateWorldFromTranscript(
 
     store.setGenerationStatus('validating');
 
-    // Attempt to commit world to store (returns false if an older request finishes after a newer one)
-    const committed = store.setWorld(world, requestId);
     const durationMs = Math.round(performance.now() - startTime);
+
+    // Attempt to commit world to store (returns false if an older request finishes after a newer one)
+    const committed = store.setWorld(world, requestId, durationMs);
 
     if (!committed) {
       // Ignored because a subsequent request took precedence

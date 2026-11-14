@@ -62,11 +62,12 @@ Before presenting to judges:
 - Click the **`🏙️ Cyberpunk Rooftop`** preset button (or speak into the microphone: *"Create a dark futuristic cyberpunk rooftop with neon lights, rain, flying platforms, and dangerous robots."*).
 - Observe the seamless live scene swap:
   - Forest transforms into a dystopian cyberpunk rooftop with neon fog and dark ambiance.
-  - Audio mood immediately transitions to tense minor second intervals.
+  - Audio mood immediately transitions to tense minor second intervals (Half-Whole Diminished).
 - Jump across platforms to avoid or engage the hazard robot:
   - Approach the red hazard drone: take damage ($-15$ HP).
   - Point out that damage is rate-limited to 1 hit per $1200\text{ms}$ (preventing immediate instant-death frame drains).
   - Health clamps safely $\ge 0$.
+  - Upon taking lethal damage, observe the **Game Over Overlay** displaying the final score, with options to **"Restart World"** (deterministic reset of health, score, and collected items) or **"Return to Main Screen"**.
 
 ---
 

@@ -5,6 +5,7 @@ import { WorldStatusPanel } from './WorldStatusPanel';
 import { GenerationLogs } from './GenerationLogs';
 import { LoadingOverlay } from '../feedback/LoadingOverlay';
 import { ErrorOverlay } from '../feedback/ErrorOverlay';
+import { GameOverOverlay } from '../feedback/GameOverOverlay';
 import { useDreamStore } from '../../store/useDreamStore';
 
 export const GameHUD: React.FC = () => {
@@ -40,6 +41,7 @@ export const GameHUD: React.FC = () => {
       {/* Standalone State Overlays */}
       <LoadingOverlay />
       <ErrorOverlay />
+      <GameOverOverlay />
     </div>
   );
 };
