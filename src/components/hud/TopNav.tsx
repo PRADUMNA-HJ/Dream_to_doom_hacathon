@@ -3,6 +3,7 @@ import { useDreamStore } from '../../store/useDreamStore';
 import { GenerationTimer } from './GenerationTimer';
 import { soundEngine } from '../../sensory/SoundEngine';
 import { ArchitectureModal } from './ArchitectureModal';
+import { AudioSuiteModal } from './AudioSuiteModal';
 
 export const TopNav: React.FC = () => {
   const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
@@ -10,6 +11,7 @@ export const TopNav: React.FC = () => {
   const resetSession = useDreamStore((state) => state.resetSession);
   const world = useDreamStore((state) => state.world);
   const [isArchOpen, setIsArchOpen] = useState(false);
+  const [isAudioSuiteOpen, setIsAudioSuiteOpen] = useState(false);
 
   const handleAudioToggle = async () => {
     if (!isAudioInitialized) {
@@ -56,7 +58,7 @@ export const TopNav: React.FC = () => {
           )}
         </div>
 
-        {/* Controls: Architecture, Audio toggle & Reset */}
+        {/* Controls: Architecture, Audio Suite, Quick Audio toggle & Reset */}
         <div className="flex items-center gap-2.5">
           <button
             type="button"
@@ -65,6 +67,15 @@ export const TopNav: React.FC = () => {
             title="Open Architecture & Technical Overview"
           >
             <span>📐 Architecture</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsAudioSuiteOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium bg-slate-900 hover:bg-indigo-950 text-indigo-300 border border-slate-800 hover:border-indigo-800 transition-all cursor-pointer"
+            title="Open Tone.js Sensory Audio Engine Suite & Presets"
+          >
+            <span>🎛️ Audio Suite</span>
           </button>
 
           <button
@@ -94,6 +105,9 @@ export const TopNav: React.FC = () => {
 
       {/* Architecture Modal Dialog */}
       <ArchitectureModal isOpen={isArchOpen} onClose={() => setIsArchOpen(false)} />
+
+      {/* Audio Engine Suite Modal Dialog (Person 3) */}
+      <AudioSuiteModal isOpen={isAudioSuiteOpen} onClose={() => setIsAudioSuiteOpen(false)} />
     </>
   );
 };

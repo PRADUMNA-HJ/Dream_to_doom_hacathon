@@ -5,14 +5,40 @@ vi.mock('tone', () => {
     start: vi.fn().mockResolvedValue(undefined),
     now: vi.fn().mockReturnValue(0),
     gainToDb: vi.fn((gain: number) => (gain <= 0 ? -Infinity : 20 * Math.log10(gain))),
+    dbToGain: vi.fn((db: number) => Math.pow(10, db / 20)),
     getDestination: vi.fn(() => ({
       mute: false,
       volume: { rampTo: vi.fn() },
+    })),
+    context: {
+      state: 'running',
+      resume: vi.fn().mockResolvedValue(undefined),
+    },
+    Gain: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      gain: {
+        rampTo: vi.fn(),
+        setValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn(),
+        value: 1,
+      },
+      dispose: vi.fn(),
+    })),
+    Compressor: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      dispose: vi.fn(),
+    })),
+    Limiter: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      toDestination: vi.fn().mockReturnThis(),
+      dispose: vi.fn(),
     })),
     PolySynth: vi.fn().mockImplementation(() => ({
       connect: vi.fn().mockReturnThis(),
       volume: { value: 0 },
       triggerAttackRelease: vi.fn(),
+      triggerAttack: vi.fn(),
+      releaseAll: vi.fn(),
       dispose: vi.fn(),
     })),
     Synth: vi.fn().mockImplementation(() => ({
@@ -28,8 +54,35 @@ vi.mock('tone', () => {
       triggerAttackRelease: vi.fn(),
       dispose: vi.fn(),
     })),
+    Noise: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      dispose: vi.fn(),
+      volume: { value: 0 },
+    })),
+    LFO: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      dispose: vi.fn(),
+      frequency: { rampTo: vi.fn(), value: 0 },
+    })),
+    FatOscillator: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      start: vi.fn(),
+      stop: vi.fn(),
+      dispose: vi.fn(),
+      volume: { value: 0 },
+    })),
+    Volume: vi.fn().mockImplementation(() => ({
+      connect: vi.fn().mockReturnThis(),
+      dispose: vi.fn(),
+      volume: { value: 0 },
+    })),
     Reverb: vi.fn().mockImplementation(() => ({
       toDestination: vi.fn().mockReturnThis(),
+      connect: vi.fn().mockReturnThis(),
       generate: vi.fn().mockResolvedValue(undefined),
       dispose: vi.fn(),
     })),

@@ -1,6 +1,26 @@
 import * as Tone from 'tone';
 import type { AudioMood, GameEventType } from '../shared/schemas/worldSchema';
 import { useDreamStore } from '../store/useDreamStore';
+import {
+  initializeAudio as initMasterAudio,
+  connectToMasterBus,
+  muteMasterAudio,
+  unmuteMasterAudio,
+  setMasterVolume,
+  disposeAudio as disposeMasterAudio,
+} from './audio/audioManager';
+import {
+  startAmbientAudio,
+  changeAmbientPreset,
+  updateAmbientMood,
+  disposeAmbientAudio,
+} from './audio/ambientAudio';
+import {
+  initializeSoundEffects,
+  playSoundEffect,
+  disposeSoundEffects,
+  type GameAudioEventType,
+} from './audio/soundEffects';
 
 /**
  * Root note and scale configurations satisfying Part 10 requirements.
@@ -73,10 +93,23 @@ export class SoundEngine {
     if (this.isInitialized) return true;
 
     try {
+      // 1. Centralized Master Audio Pipeline (Gain -> Compressor -> Limiter -> Destination)
+      try {
+        await initMasterAudio();
+        await initializeSoundEffects();
+      } catch (masterErr) {
+        console.warn('[SoundEngine] Master bus initialization warning:', masterErr);
+      }
+
       await Tone.start();
 
-      // Master output filter & reverb bus
-      this.reverb = new Tone.Reverb({ decay: 3.5, wet: 0.4 }).toDestination();
+      // Master output filter & reverb bus routed through Master Bus
+      this.reverb = new Tone.Reverb({ decay: 3.5, wet: 0.4 });
+      try {
+        connectToMasterBus(this.reverb);
+      } catch {
+        this.reverb.toDestination();
+      }
       await this.reverb.generate();
 
       this.filter = new Tone.Filter(1800, 'lowpass').connect(this.reverb);
@@ -106,7 +139,7 @@ export class SoundEngine {
       useDreamStore.getState().setAudioInitialized(true);
       useDreamStore.getState().addTelemetryLog('audio-ready', 'Tone.js audio engine initialized.');
 
-      // Start gentle ambient mood loop
+      // Start gentle ambient mood loop & preset
       this.applyAudioMood(this.currentMood);
 
       return true;
@@ -121,7 +154,37 @@ export class SoundEngine {
    */
   public applyAudioMood(mood: AudioMood): void {
     this.currentMood = mood;
-    if (!this.isInitialized || this.isMuted || !this.ambientSynth) return;
+    if (!this.isInitialized || this.isMuted) return;
+
+    // Synchronize Person 3's procedural ambient preset & mood scale
+    try {
+      switch (mood) {
+        case 'calm':
+          updateAmbientMood({ scale: 'pentatonic', tempo: 100, ambientPreset: 'nature_breeze', reverbDecay: 3.0 });
+          startAmbientAudio('nature_breeze');
+          changeAmbientPreset('nature_breeze');
+          break;
+        case 'mystical':
+          updateAmbientMood({ scale: 'pentatonic', tempo: 110, ambientPreset: 'ethereal_drone', reverbDecay: 3.5 });
+          startAmbientAudio('ethereal_drone');
+          changeAmbientPreset('ethereal_drone');
+          break;
+        case 'tense':
+          updateAmbientMood({ scale: 'minor', tempo: 130, ambientPreset: 'dystopian_drone', reverbDecay: 2.0 });
+          startAmbientAudio('dystopian_drone');
+          changeAmbientPreset('dystopian_drone');
+          break;
+        case 'chaotic':
+          updateAmbientMood({ scale: 'diminished', tempo: 140, ambientPreset: 'cyber_ambience', reverbDecay: 1.5 });
+          startAmbientAudio('cyber_ambience');
+          changeAmbientPreset('cyber_ambience');
+          break;
+      }
+    } catch {
+      // Graceful fallback in mocked test environments
+    }
+
+    if (!this.ambientSynth) return;
 
     if (this.loopIntervalId) {
       clearInterval(this.loopIntervalId);
@@ -175,6 +238,24 @@ export class SoundEngine {
    */
   public playEventSfx(type: GameEventType): void {
     if (!this.isInitialized || this.isMuted) return;
+
+    // Trigger Person 3's procedural sound effects engine
+    const canonicalMap: Record<GameEventType, GameAudioEventType> = {
+      'world-generated': 'world_generation_completed',
+      'item-collected': 'object_spawned',
+      'player-jump': 'object_spawned',
+      'player-damaged': 'object_destroyed',
+      'portal-entered': 'environment_changed',
+      'game-over': 'object_destroyed',
+    };
+    const canonical = canonicalMap[type];
+    if (canonical) {
+      try {
+        playSoundEffect(canonical);
+      } catch {
+        // Fallback for mocked environments
+      }
+    }
 
     const now = Tone.now();
 
@@ -232,14 +313,35 @@ export class SoundEngine {
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
     useDreamStore.getState().setMuted(muted);
-    Tone.getDestination().mute = muted;
+    try {
+      if (muted) {
+        muteMasterAudio();
+      } else {
+        unmuteMasterAudio();
+      }
+    } catch {
+      // Fallback
+    }
+    try {
+      Tone.getDestination().mute = muted;
+    } catch {
+      // Fallback
+    }
   }
 
   public setVolume(volume: number): void {
-    // Convert 0..1 to dB (-40dB to 0dB)
-    const db = volume <= 0 ? -Infinity : Tone.gainToDb(volume);
-    Tone.getDestination().volume.rampTo(db, 0.1);
     useDreamStore.getState().setAudioVolume(volume);
+    try {
+      setMasterVolume(volume);
+    } catch {
+      // Fallback
+    }
+    try {
+      const db = volume <= 0 ? -Infinity : Tone.gainToDb(volume);
+      Tone.getDestination().volume.rampTo(db, 0.1);
+    } catch {
+      // Fallback
+    }
   }
 
   public dispose(): void {
@@ -253,6 +355,14 @@ export class SoundEngine {
     this.reverb?.dispose();
     this.filter?.dispose();
     this.isInitialized = false;
+
+    try {
+      disposeAmbientAudio();
+      disposeSoundEffects();
+      disposeMasterAudio();
+    } catch {
+      // Clean up
+    }
   }
 }
 

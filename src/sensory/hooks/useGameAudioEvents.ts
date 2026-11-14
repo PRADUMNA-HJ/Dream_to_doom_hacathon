@@ -34,15 +34,22 @@ export const CANONICAL_GAME_AUDIO_EVENTS: readonly GameAudioEventType[] = [
 
 /** Canonical mapping including team shorthand aliases from the architecture document */
 const EVENT_NAME_MAP: Record<string, GameAudioEventType> = {
-  // 1. World Generation Started
+  // 1. World Generation Started / Completed
   world_generation_started: 'world_generation_started',
   'world:start': 'world_generation_started',
   generation_started: 'world_generation_started',
+  'world-generated': 'world_generation_completed',
+  world_generation_completed: 'world_generation_completed',
+  'world:ready': 'world_generation_completed',
+  generation_completed: 'world_generation_completed',
+  world_ready: 'world_generation_completed',
 
-  // 2. Object Spawned
+  // 2. Object Spawned / Collected / Jump
   object_spawned: 'object_spawned',
   'spawn:object': 'object_spawned',
   spawn_object: 'object_spawned',
+  'item-collected': 'object_spawned',
+  'player-jump': 'object_spawned',
 
   // 3. Tree Generated
   tree_generated: 'tree_generated',
@@ -59,35 +66,36 @@ const EVENT_NAME_MAP: Record<string, GameAudioEventType> = {
   'spawn:enemy': 'enemy_spawned',
   spawn_enemy: 'enemy_spawned',
 
-  // 6. Object Destroyed
+  // 6. Object Destroyed / Damaged / Game Over
   object_destroyed: 'object_destroyed',
   'destroy:object': 'object_destroyed',
   destroy_object: 'object_destroyed',
+  'player-damaged': 'object_destroyed',
+  'game-over': 'object_destroyed',
 
-  // 7. Environment Changed
+  // 7. Environment Changed / Portal Entered
   environment_changed: 'environment_changed',
   'env:change': 'environment_changed',
   weather_changed: 'environment_changed',
-
-  // 8. World Generation Completed
-  world_generation_completed: 'world_generation_completed',
-  'world:ready': 'world_generation_completed',
-  generation_completed: 'world_generation_completed',
-  world_ready: 'world_generation_completed',
+  'portal-entered': 'environment_changed',
 };
 
 // ============================================================================
-// Helper: Normalize Raw Event Strings
+// Helper: Normalize Raw Event Strings or GameEvent Objects
 // ============================================================================
 
 /**
- * Resolves a raw event string (which may include UUIDs or prefixes like 'spawn:tree:entity_42')
+ * Resolves a raw event string or typed event object (which may include UUIDs or prefixes like 'spawn:tree:entity_42')
  * into one of the 8 canonical GameAudioEventType values.
  */
-export function resolveCanonicalAudioEvent(rawEvent: string): GameAudioEventType | null {
-  if (!rawEvent || typeof rawEvent !== 'string') return null;
+export function resolveCanonicalAudioEvent(
+  rawEvent: string | { type: string }
+): GameAudioEventType | null {
+  if (!rawEvent) return null;
+  const eventString = typeof rawEvent === 'string' ? rawEvent : rawEvent.type;
+  if (!eventString || typeof eventString !== 'string') return null;
 
-  const trimmed = rawEvent.trim().toLowerCase();
+  const trimmed = eventString.trim().toLowerCase();
 
   // 1. Direct match
   if (EVENT_NAME_MAP[trimmed]) {
@@ -179,7 +187,7 @@ export interface UseGameAudioEventsOptions {
  * @param options - Configuration options and callbacks
  */
 export function useGameAudioEvents(
-  activeEvents: readonly string[] = [],
+  activeEvents: readonly (string | { type: string })[] = [],
   options: UseGameAudioEventsOptions = {}
 ): {
   triggerAudioEvent: (event: GameAudioEventType | string) => boolean;
@@ -272,20 +280,21 @@ export function useGameAudioEvents(
 
       // Process new events sequentially in arrival order
       newEvents.forEach((rawEvent) => {
+        const eventStr = typeof rawEvent === 'string' ? rawEvent : rawEvent.type;
         const canonical =
-          optionsRef.current.customMapping?.[rawEvent] ||
+          optionsRef.current.customMapping?.[eventStr] ||
           resolveCanonicalAudioEvent(rawEvent);
 
         if (canonical) {
           const now = Date.now();
-          const eventKey = `${canonical}:${rawEvent}`;
+          const eventKey = `${canonical}:${eventStr}`;
           const lastDispatched = globalRecentDispatches.get(eventKey) || 0;
 
           // Cross-instance and rapid remount duplicate prevention
           if (now - lastDispatched >= GLOBAL_DEDUP_WINDOW_MS) {
             recordDispatch(eventKey, now);
             playSoundEffect(canonical);
-            optionsRef.current.onEventSoundTriggered?.(canonical, rawEvent);
+            optionsRef.current.onEventSoundTriggered?.(canonical, eventStr);
           }
         }
       });
