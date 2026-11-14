@@ -3,6 +3,7 @@ import { useSpeechInput } from '../../sensory/useSpeechInput';
 import { generateWorldFromTranscript } from '../../services/worldGenerationController';
 import { useDreamStore } from '../../store/useDreamStore';
 import { soundEngine } from '../../sensory/SoundEngine';
+import { DEMO_PRESETS } from '../../shared/constants/demoPresets';
 
 export const VoiceControls: React.FC = () => {
   const { transcript, isListening, speechError, isSupported, toggleListening, setTranscript, clearTranscript } =
@@ -29,12 +30,6 @@ export const VoiceControls: React.FC = () => {
     await generateWorldFromTranscript(promptToSend);
     setTypedInput('');
   };
-
-  const demoPresets = [
-    { label: '🌿 Enchanted Forest', prompt: 'Create an enchanted forest with giant glowing trees, floating crystals, mysterious portals, and soft mist.' },
-    { label: '🏙️ Cyberpunk Rooftop', prompt: 'Create a dark futuristic cyberpunk rooftop with neon lights, rain, flying platforms, and dangerous robots.' },
-    { label: '☁️ Floating Islands', prompt: 'Create an ethereal world with floating islands, glowing clouds, crystal structures, and a golden portal.' },
-  ];
 
   return (
     <div className="bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4 shadow-2xl max-w-xl w-full space-y-3.5">
@@ -119,14 +114,16 @@ export const VoiceControls: React.FC = () => {
         <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mr-1">
           Demo Presets:
         </span>
-        {demoPresets.map((preset) => (
+        {DEMO_PRESETS.map((preset) => (
           <button
-            key={preset.label}
-            onClick={() => handleGenerate(preset.prompt)}
+            key={preset.id}
+            onClick={() => handleGenerate(preset.transcript)}
             disabled={isGenerating}
+            title={preset.description}
             className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-indigo-950 text-slate-300 hover:text-indigo-300 border border-slate-800 hover:border-indigo-700 transition-all cursor-pointer"
           >
-            {preset.label}
+            <span>{preset.icon} </span>
+            <span>{preset.name}</span>
           </button>
         ))}
       </div>

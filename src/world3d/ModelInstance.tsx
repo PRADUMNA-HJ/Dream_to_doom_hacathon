@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { RigidBody } from '@react-three/rapier';
 import type { WorldEntity } from '../shared/schemas/worldSchema';
 import { ProceduralAsset } from './AssetRegistry';
@@ -11,6 +11,7 @@ interface ModelInstanceProps {
 
 export const ModelInstance: React.FC<ModelInstanceProps> = ({ entity }) => {
   const [isCollected, setIsCollected] = useState(false);
+  const lastDamageTimeRef = useRef<number>(0);
   const setScore = useDreamStore((state) => state.setScore);
   const setPlayerHealth = useDreamStore((state) => state.setPlayerHealth);
 
@@ -21,21 +22,29 @@ export const ModelInstance: React.FC<ModelInstanceProps> = ({ entity }) => {
   const handleInteraction = () => {
     switch (entity.interaction) {
       case 'collectible':
-        setIsCollected(true);
-        setScore((prev) => prev + 10);
-        eventBus.publish({
-          type: 'item-collected',
-          payload: { entityId: entity.id, asset: entity.asset },
-        });
+        if (!isCollected) {
+          setIsCollected(true);
+          setScore((prev) => prev + 10);
+          eventBus.publish({
+            type: 'item-collected',
+            payload: { entityId: entity.id, asset: entity.asset },
+          });
+        }
         break;
 
-      case 'hazard':
-        setPlayerHealth((prev) => prev - 15);
-        eventBus.publish({
-          type: 'player-damaged',
-          payload: { entityId: entity.id, damage: 15 },
-        });
+      case 'hazard': {
+        const now = Date.now();
+        // 1200ms cooldown to prevent multi-frame physics damage drain
+        if (now - lastDamageTimeRef.current > 1200) {
+          lastDamageTimeRef.current = now;
+          setPlayerHealth((prev) => prev - 15);
+          eventBus.publish({
+            type: 'player-damaged',
+            payload: { entityId: entity.id, damage: 15 },
+          });
+        }
         break;
+      }
 
       case 'portal':
         eventBus.publish({

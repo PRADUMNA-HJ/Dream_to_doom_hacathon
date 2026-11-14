@@ -3,6 +3,7 @@ import { useDreamStore } from '../../store/useDreamStore';
 
 export const GenerationLogs: React.FC = () => {
   const telemetryLogs = useDreamStore((state) => state.telemetryLogs);
+  const generationStartedAt = useDreamStore((state) => state.generationStartedAt);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -12,6 +13,13 @@ export const GenerationLogs: React.FC = () => {
   }, [telemetryLogs]);
 
   if (telemetryLogs.length === 0) return null;
+
+  // Compute baseline start time for relative elapsed stopwatch timestamps
+  const baseTime =
+    generationStartedAt ||
+    (telemetryLogs.length > 0
+      ? telemetryLogs[telemetryLogs.length - 1].timestamp
+      : Date.now());
 
   return (
     <div className="w-full max-w-lg bg-slate-950/85 backdrop-blur-md rounded-xl border border-slate-800/80 p-3.5 shadow-2xl space-y-2 font-mono">
@@ -30,8 +38,12 @@ export const GenerationLogs: React.FC = () => {
         className="max-h-36 overflow-y-auto space-y-1.5 text-xs text-slate-300 pr-1 scrollbar-thin scrollbar-thumb-slate-700"
       >
         {telemetryLogs.map((log) => {
-          const date = new Date(log.timestamp);
-          const timeFormatted = `${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}.${String(date.getMilliseconds()).padStart(3, '0')}`;
+          const elapsedMs = Math.max(0, log.timestamp - baseTime);
+          const totalSeconds = Math.floor(elapsedMs / 1000);
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          const millis = Math.floor(elapsedMs % 1000);
+          const timeFormatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
 
           return (
             <div key={log.id} className="flex items-start gap-2 text-[11px] leading-tight">

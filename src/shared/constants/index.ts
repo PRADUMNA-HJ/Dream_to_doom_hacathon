@@ -1,5 +1,7 @@
 import type { WorldSpec, AssetType } from '../schemas/worldSchema';
 
+export * from './demoPresets';
+
 export const MAX_WORLD_ENTITIES = 28;
 
 export const ASSET_IDENTIFIERS: readonly AssetType[] = [
