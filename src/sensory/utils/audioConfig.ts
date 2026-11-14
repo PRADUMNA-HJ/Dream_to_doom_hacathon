@@ -29,6 +29,9 @@ export const DEFAULT_MASTER_AUDIO_CONFIG: MasterAudioBusConfig = {
   fadeRampTimeSec: 0.4,
 };
 
+/** Alias for DEFAULT_MASTER_AUDIO_CONFIG for bus configuration naming consistency */
+export const DEFAULT_MASTER_BUS_CONFIG = DEFAULT_MASTER_AUDIO_CONFIG;
+
 export const DEFAULT_AUDIO_MOOD: AudioMoodConfig = {
   tempo: 120,
   scale: 'minor',
@@ -66,6 +69,9 @@ export const MUSICAL_SCALES: Record<MusicalScaleType, string[]> = {
     'C5', 'Eb5', 'Gb5',
   ],
 };
+
+/** Alias for MUSICAL_SCALES for scale mapping naming consistency */
+export const AUDIO_MOOD_SCALES = MUSICAL_SCALES;
 
 // ============================================================================
 // 3. Ambient Preset Configurations (Drone & Atmosphere)
