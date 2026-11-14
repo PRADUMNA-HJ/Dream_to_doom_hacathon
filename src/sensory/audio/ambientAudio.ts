@@ -1,3 +1,4 @@
+/// <reference path="../types/tone-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Ambient Audio Synthesizer
  * Generates procedural atmospheric soundscapes dynamically shaped by AudioMoodConfig.

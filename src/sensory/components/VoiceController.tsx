@@ -1,3 +1,4 @@
+/// <reference path="../types/react-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Voice Controller Component
  * Standalone cyberpunk HUD voice terminal providing real-time speech recognition,
@@ -160,10 +161,10 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
   onFinalTranscript,
   onManualSubmit,
   onSubmitPrompt,
-  initialLanguage = 'en-US',
+  initialLanguage = 'en-US' as SupportedLanguage,
   showManualFallback = true,
   className = '',
-}) => {
+}: VoiceControllerProps) => {
   const [manualText, setManualText] = useState('');
   const [isManualExpanded, setIsManualExpanded] = useState(false);
   const manualInputId = useId();
@@ -266,7 +267,9 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
           <select
             id="language-select"
             value={language}
-            onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setLanguage(e.target.value as SupportedLanguage)
+            }
             className="text-xs bg-slate-900/90 border border-cyan-700/50 rounded-lg px-2.5 py-1 text-cyan-200 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
@@ -464,8 +467,10 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
                 id={manualInputId}
                 rows={2}
                 value={manualText}
-                onChange={(e) => setManualText(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setManualText(e.target.value)
+                }
+                onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleManualSubmit();

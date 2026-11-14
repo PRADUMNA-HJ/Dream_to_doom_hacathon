@@ -77,7 +77,13 @@ declare module 'tone' {
   }
 
   export class Noise extends ToneAudioNode {
-    constructor(type?: 'white' | 'pink' | 'brown' | { type?: 'white' | 'pink' | 'brown' });
+    constructor(
+      type?:
+        | 'white'
+        | 'pink'
+        | 'brown'
+        | { type?: 'white' | 'pink' | 'brown'; volume?: number }
+    );
     type: 'white' | 'pink' | 'brown';
     start(): this;
     stop(): this;
@@ -111,7 +117,7 @@ declare module 'tone' {
       frequency?:
         | number
         | string
-        | { frequency?: number | string; type?: string; spread?: number; count?: number }
+        | { frequency?: number | string; type?: string; spread?: number; count?: number; volume?: number }
     );
     frequency: Param<number>;
     spread: number;

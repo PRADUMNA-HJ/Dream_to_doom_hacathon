@@ -1,3 +1,5 @@
+/// <reference path="../types/react-ambient.d.ts" />
+/// <reference path="../types/tone-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Audio Controls HUD Component
  * Standalone cyberpunk HUD console providing master bus volume/mute management,
@@ -118,10 +120,10 @@ const PauseIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) 
 
 export const AudioControls: React.FC<AudioControlsProps> = ({
   className = '',
-  initialAmbientPreset = 'ethereal_drone',
+  initialAmbientPreset = 'ethereal_drone' as AmbientPresetType,
   showSfxPreview = true,
   onStatusChange,
-}) => {
+}: AudioControlsProps) => {
   // Master state
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [engineStatus, setEngineStatus] = useState<AudioEngineStatus>('uninitialized');
@@ -564,7 +566,9 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
             <select
               id={sfxSelectId}
               value={selectedPreviewEvent}
-              onChange={(e) => setSelectedPreviewEvent(e.target.value as GameAudioEventType)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setSelectedPreviewEvent(e.target.value as GameAudioEventType)
+              }
               className="flex-1 text-xs bg-slate-950 border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer"
             >
               {GAME_AUDIO_EVENTS_META.map((meta) => (

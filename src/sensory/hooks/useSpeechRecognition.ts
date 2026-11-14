@@ -1,3 +1,4 @@
+/// <reference path="../types/react-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Speech Recognition Hook
  * Reusable React hook for Web Speech API integration with continuous speech-to-text,

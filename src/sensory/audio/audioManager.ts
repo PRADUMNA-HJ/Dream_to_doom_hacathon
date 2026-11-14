@@ -1,3 +1,4 @@
+/// <reference path="../types/tone-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Centralized Tone.js Audio Manager
  * Manages the global Web Audio context lifecycle, Master Bus routing,

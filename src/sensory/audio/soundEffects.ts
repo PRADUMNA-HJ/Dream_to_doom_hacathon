@@ -1,3 +1,4 @@
+/// <reference path="../types/tone-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Procedural Sound Effects & Game Event Mapper
  * Generates synthesized sound effects for real-time 3D world events using Tone.js.

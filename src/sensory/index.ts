@@ -1,3 +1,5 @@
+/// <reference path="./types/react-ambient.d.ts" />
+/// <reference path="./types/tone-ambient.d.ts" />
 /**
  * Dream-to-Doom: Sensory Domain — Public Entry Point (Barrel Export)
  *
