@@ -36,63 +36,80 @@ export const ProceduralAsset: React.FC<ProceduralAssetProps> = ({ asset, color }
     case 'tree':
       return (
         <group>
-          {/* Trunk */}
-          <mesh position={[0, 0.75, 0]} castShadow>
-            <cylinderGeometry args={[0.2, 0.3, 1.5, 6]} />
-            <meshStandardMaterial color="#5d4037" roughness={0.9} />
-          </mesh>
-          {/* Foliage Cone 1 */}
+          {/* Ancient gnarled trunk */}
           <mesh position={[0, 1.8, 0]} castShadow>
-            <coneGeometry args={[1.2, 1.5, 6]} />
-            <meshStandardMaterial color={color || '#2e7d32'} roughness={0.6} />
+            <cylinderGeometry args={[0.3, 0.55, 3.6, 8]} />
+            <meshStandardMaterial color="#3e2723" roughness={0.9} />
           </mesh>
-          {/* Foliage Cone 2 */}
-          <mesh position={[0, 2.6, 0]} castShadow>
-            <coneGeometry args={[0.8, 1.2, 6]} />
-            <meshStandardMaterial color={color || '#388e3c'} roughness={0.6} />
+          {/* Multi-layered luminous foliage globes */}
+          <mesh position={[0, 3.8, 0]} castShadow>
+            <dodecahedronGeometry args={[1.8, 1]} />
+            <meshStandardMaterial
+              color={color || '#10b981'}
+              emissive={color || '#059669'}
+              emissiveIntensity={0.5}
+              roughness={0.5}
+            />
+          </mesh>
+          <mesh position={[1.1, 4.4, 0.6]} castShadow>
+            <dodecahedronGeometry args={[1.2, 1]} />
+            <meshStandardMaterial
+              color={color || '#34d399'}
+              emissive={color || '#10b981'}
+              emissiveIntensity={0.6}
+              roughness={0.5}
+            />
+          </mesh>
+          <mesh position={[-1.0, 4.2, -0.6]} castShadow>
+            <dodecahedronGeometry args={[1.3, 1]} />
+            <meshStandardMaterial
+              color={color || '#059669'}
+              emissive={color || '#047857'}
+              emissiveIntensity={0.4}
+              roughness={0.5}
+            />
           </mesh>
         </group>
       );
 
     case 'rock':
       return (
-        <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-          <dodecahedronGeometry args={[0.8, 0]} />
-          <meshStandardMaterial color={color || '#78909c'} roughness={0.9} metalness={0.1} />
+        <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+          <dodecahedronGeometry args={[1.2, 0]} />
+          <meshStandardMaterial color={color || '#64748b'} roughness={0.8} metalness={0.2} />
         </mesh>
       );
 
     case 'crystal':
       return (
-        <mesh ref={meshRef} position={[0, 0.8, 0]} castShadow>
-          <octahedronGeometry args={[0.7, 0]} />
+        <mesh ref={meshRef} position={[0, 1.0, 0]} castShadow>
+          <octahedronGeometry args={[0.9, 0]} />
           <meshStandardMaterial
             color={color || '#00e5ff'}
             emissive={color || '#00b0ff'}
-            emissiveIntensity={0.6}
+            emissiveIntensity={1.2}
             roughness={0.1}
-            metalness={0.8}
-            wireframe={false}
+            metalness={0.9}
           />
         </mesh>
       );
 
     case 'portal':
       return (
-        <group position={[0, 1.5, 0]}>
+        <group position={[0, 2.0, 0]}>
           {/* Outer ring */}
           <mesh ref={meshRef} castShadow>
-            <torusGeometry args={[1.2, 0.15, 8, 24]} />
+            <torusGeometry args={[1.6, 0.2, 12, 32]} />
             <meshStandardMaterial
               color={color || '#d500f9'}
               emissive={color || '#aa00ff'}
-              emissiveIntensity={0.8}
+              emissiveIntensity={1.5}
               roughness={0.2}
             />
           </mesh>
           {/* Inner swirl disc */}
           <mesh>
-            <circleGeometry args={[1.1, 16]} />
+            <circleGeometry args={[1.4, 24]} />
             <meshBasicMaterial color="#1a0033" opacity={0.7} transparent />
           </mesh>
         </group>
@@ -100,72 +117,134 @@ export const ProceduralAsset: React.FC<ProceduralAssetProps> = ({ asset, color }
 
     case 'platform':
       return (
-        <mesh position={[0, 0.25, 0]} receiveShadow castShadow>
-          <boxGeometry args={[3, 0.5, 3]} />
-          <meshStandardMaterial color={color || '#37474f'} roughness={0.7} metalness={0.2} />
-        </mesh>
+        <group position={[0, 0, 0]}>
+          <mesh position={[0, 0.3, 0]} receiveShadow castShadow>
+            <boxGeometry args={[4.2, 0.6, 4.2]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.7} />
+          </mesh>
+          {/* Glowing Neon Edge Trim */}
+          <mesh position={[0, 0.3, 2.12]}>
+            <boxGeometry args={[4.2, 0.15, 0.05]} />
+            <meshBasicMaterial color={color || '#00e5ff'} />
+          </mesh>
+          <mesh position={[0, 0.3, -2.12]}>
+            <boxGeometry args={[4.2, 0.15, 0.05]} />
+            <meshBasicMaterial color={color || '#00e5ff'} />
+          </mesh>
+        </group>
       );
 
     case 'enemy':
       return (
-        <mesh ref={meshRef} position={[0, 0.7, 0]} castShadow>
-          <icosahedronGeometry args={[0.7, 0]} />
-          <meshStandardMaterial
-            color={color || '#ff1744'}
-            emissive="#b71c1c"
-            emissiveIntensity={0.5}
-            roughness={0.3}
-            metalness={0.5}
-          />
-        </mesh>
+        <group ref={groupRef} position={[0, 1.8, 0]}>
+          {/* Cyber Surveillance Drone Core */}
+          <mesh castShadow>
+            <sphereGeometry args={[0.7, 16, 16]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.9} />
+          </mesh>
+          {/* Glowing Red Sensor Visor */}
+          <mesh position={[0, 0.1, 0.6]}>
+            <boxGeometry args={[0.8, 0.25, 0.2]} />
+            <meshBasicMaterial color="#ef4444" />
+          </mesh>
+          {/* Rotor Ring */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[1.2, 0.08, 8, 24]} />
+            <meshStandardMaterial
+              color={color || '#06b6d4'}
+              emissive={color || '#0891b2'}
+              emissiveIntensity={0.8}
+            />
+          </mesh>
+        </group>
       );
 
     case 'house':
       return (
-        <group position={[0, 1, 0]}>
-          {/* Base */}
-          <mesh castShadow receiveShadow>
-            <boxGeometry args={[2, 1.8, 2]} />
-            <meshStandardMaterial color={color || '#8d6e63'} roughness={0.8} />
+        <group position={[0, 0, 0]}>
+          {/* Main Tower Body */}
+          <mesh position={[0, 3.5, 0]} castShadow receiveShadow>
+            <boxGeometry args={[3.2, 7, 3.2]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.3} metalness={0.8} />
           </mesh>
-          {/* Roof */}
-          <mesh position={[0, 1.4, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-            <coneGeometry args={[1.7, 1.2, 4]} />
-            <meshStandardMaterial color="#c62828" roughness={0.5} />
+          {/* Glowing Window Strips */}
+          <mesh position={[0, 3.5, 1.62]}>
+            <planeGeometry args={[2.6, 5.8]} />
+            <meshBasicMaterial color={color || '#00e5ff'} wireframe transparent opacity={0.6} />
+          </mesh>
+          <mesh position={[0, 3.5, -1.62]} rotation={[0, Math.PI, 0]}>
+            <planeGeometry args={[2.6, 5.8]} />
+            <meshBasicMaterial color={color || '#00e5ff'} wireframe transparent opacity={0.6} />
+          </mesh>
+          {/* Upper Setback Tier */}
+          <mesh position={[0, 7.8, 0]} castShadow>
+            <boxGeometry args={[2.2, 2.2, 2.2]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.7} />
+          </mesh>
+          {/* Communications Mast & Spire */}
+          <mesh position={[0, 9.5, 0]}>
+            <cylinderGeometry args={[0.06, 0.12, 2.4, 6]} />
+            <meshStandardMaterial color="#64748b" metalness={0.9} />
+          </mesh>
+          <mesh position={[0, 10.7, 0]}>
+            <sphereGeometry args={[0.2, 8, 8]} />
+            <meshBasicMaterial color="#ff0055" />
           </mesh>
         </group>
       );
 
     case 'mushroom':
       return (
-        <group position={[0, 0.4, 0]}>
-          <mesh position={[0, 0.3, 0]} castShadow>
-            <cylinderGeometry args={[0.15, 0.2, 0.6, 8]} />
-            <meshStandardMaterial color="#fff8e1" />
+        <group position={[0, 0, 0]}>
+          {/* Curved bioluminescent stalk */}
+          <mesh position={[0, 1.2, 0]} castShadow>
+            <cylinderGeometry args={[0.22, 0.38, 2.4, 8]} />
+            <meshStandardMaterial color="#f8fafc" roughness={0.3} emissive="#38bdf8" emissiveIntensity={0.2} />
           </mesh>
-          <mesh position={[0, 0.7, 0]} castShadow>
-            <sphereGeometry args={[0.5, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color={color || '#e91e63'} roughness={0.4} />
+          {/* Giant bioluminescent umbrella cap */}
+          <mesh position={[0, 2.4, 0]} castShadow>
+            <sphereGeometry args={[1.5, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8]} />
+            <meshStandardMaterial
+              color={color || '#ec4899'}
+              emissive={color || '#db2777'}
+              emissiveIntensity={0.9}
+              roughness={0.2}
+            />
+          </mesh>
+          {/* Glowing spots on cap */}
+          <mesh position={[0.7, 2.8, 0.7]}>
+            <sphereGeometry args={[0.22, 8, 8]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[-0.6, 2.9, 0.6]}>
+            <sphereGeometry args={[0.18, 8, 8]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <mesh position={[0.1, 3.1, -0.8]}>
+            <sphereGeometry args={[0.2, 8, 8]} />
+            <meshBasicMaterial color="#ffffff" />
           </mesh>
         </group>
       );
 
     case 'lamp':
       return (
-        <group position={[0, 1.2, 0]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.08, 0.12, 2.4, 8]} />
-            <meshStandardMaterial color="#424242" metalness={0.8} />
+        <group position={[0, 0, 0]}>
+          {/* Industrial metal street pole */}
+          <mesh position={[0, 2.2, 0]} castShadow>
+            <cylinderGeometry args={[0.08, 0.14, 4.4, 8]} />
+            <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.2} />
           </mesh>
-          <mesh position={[0, 1.2, 0]}>
-            <sphereGeometry args={[0.3, 12, 12]} />
+          {/* Holographic Glowing Light Tube */}
+          <mesh position={[0, 4.2, 0]}>
+            <cylinderGeometry args={[0.18, 0.18, 1.4, 12]} />
             <meshStandardMaterial
-              color={color || '#ffeb3b'}
-              emissive={color || '#fbc02d'}
-              emissiveIntensity={1.2}
+              color={color || '#00e5ff'}
+              emissive={color || '#00b0ff'}
+              emissiveIntensity={1.8}
             />
           </mesh>
-          <pointLight position={[0, 1.2, 0]} color={color || '#fff9c4'} intensity={2} distance={8} />
+          <pointLight position={[0, 4.2, 0]} color={color || '#00e5ff'} intensity={3} distance={12} />
         </group>
       );
 
@@ -173,15 +252,15 @@ export const ProceduralAsset: React.FC<ProceduralAssetProps> = ({ asset, color }
       return (
         <group ref={groupRef} position={[0, 2, 0]}>
           <mesh position={[0, 0, 0]} castShadow>
-            <sphereGeometry args={[1, 10, 10]} />
+            <sphereGeometry args={[1.2, 10, 10]} />
             <meshStandardMaterial color="#eceff1" opacity={0.85} transparent roughness={0.9} />
           </mesh>
-          <mesh position={[0.8, -0.2, 0]} castShadow>
-            <sphereGeometry args={[0.7, 10, 10]} />
+          <mesh position={[1.0, -0.2, 0]} castShadow>
+            <sphereGeometry args={[0.9, 10, 10]} />
             <meshStandardMaterial color="#eceff1" opacity={0.85} transparent roughness={0.9} />
           </mesh>
-          <mesh position={[-0.7, -0.2, 0]} castShadow>
-            <sphereGeometry args={[0.6, 10, 10]} />
+          <mesh position={[-0.9, -0.2, 0]} castShadow>
+            <sphereGeometry args={[0.8, 10, 10]} />
             <meshStandardMaterial color="#eceff1" opacity={0.85} transparent roughness={0.9} />
           </mesh>
         </group>

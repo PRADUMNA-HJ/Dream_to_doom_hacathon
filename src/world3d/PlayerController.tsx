@@ -192,8 +192,8 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
       mass={1}
       friction={0.6}
     >
-      {/* Player Character Avatar */}
-      <group ref={avatarGroupRef}>
+      {/* Player Character Avatar (hidden during 10s cinematic idea video tour) */}
+      <group ref={avatarGroupRef} visible={viewMode !== 'cinematic'}>
         {/* Glowing Visor / Helmet */}
         <mesh position={[0, 0.95, 0.05]} castShadow>
           <sphereGeometry args={[0.3, 16, 16]} />

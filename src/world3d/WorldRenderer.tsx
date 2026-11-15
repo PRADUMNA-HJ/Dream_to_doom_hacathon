@@ -7,6 +7,8 @@ import type { WorldSpec } from '../shared/schemas/worldSchema';
 import { ModelInstance } from './ModelInstance';
 import { PlayerController } from './PlayerController';
 import { CinematicCameraController } from './CinematicCameraController';
+import { ThematicBackdrop } from './ThematicBackdrop';
+import { AtmosphericWeatherEffect } from './AtmosphericWeatherEffect';
 import { useDreamStore } from '../store/useDreamStore';
 import { eventBus } from '../shared/events/eventBus';
 
@@ -154,14 +156,27 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
         />
       )}
 
+      {/* Atmospheric Weather Particles (Rain, Snow, Storm) */}
+      <AtmosphericWeatherEffect
+        weatherType={world.weather.type}
+        color={world.lighting.directionalColor}
+      />
+
+      {/* Thematic Environmental Backdrop (Skyscrapers, Ringed Planets, Floating Islands) */}
+      <ThematicBackdrop
+        biome={world.biome}
+        mood={world.mood}
+        accentColor={world.lighting.directionalColor}
+      />
+
       {/* Static Ground Collider */}
       <RigidBody type="fixed" friction={1}>
         <mesh position={[0, -0.5, 0]} receiveShadow>
           <boxGeometry args={[120, 1, 120]} />
           <meshStandardMaterial
             color={world.environment.groundColor}
-            roughness={0.8}
-            metalness={0.1}
+            roughness={world.biome === 'dark_castle' ? 0.25 : 0.8}
+            metalness={world.biome === 'dark_castle' ? 0.75 : 0.1}
           />
         </mesh>
       </RigidBody>

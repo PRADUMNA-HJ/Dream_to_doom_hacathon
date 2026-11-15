@@ -92,6 +92,7 @@ export const WorldWeatherSchema = z.object({
   intensity: z.number().finite().min(0, 'Intensity must be >= 0').max(1, 'Intensity must be <= 1'),
 }).strict();
 export type WorldWeather = z.infer<typeof WorldWeatherSchema>;
+export type WeatherType = WorldWeather['type'];
 
 /**
  * Environment Schema
