@@ -213,3 +213,4 @@ export const DragonBattleVignette: React.FC<DragonBattleVignetteProps> = ({ acti
     </group>
   );
 };
+
