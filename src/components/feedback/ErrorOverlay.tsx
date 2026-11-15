@@ -2,13 +2,27 @@ import React from 'react';
 import { useDreamStore } from '../../store/useDreamStore';
 import { DEMO_PRESETS, DEMO_PRESET_WORLDS, DEFAULT_MOCK_WORLD, type WorldSpec } from '../../shared/constants';
 import { soundEngine } from '../../sensory/SoundEngine';
+import { synthesizeWorldFromPrompt } from '../../services/proceduralPromptSynthesizer';
 
 export const ErrorOverlay: React.FC = () => {
   const generationError = useDreamStore((state) => state.generationError);
   const resetGeneration = useDreamStore((state) => state.resetGeneration);
   const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
+  const transcript = useDreamStore((state) => state.transcript);
 
   if (!generationError) return null;
+
+  const handleSynthesizePrompt = () => {
+    resetGeneration();
+    if (!isAudioInitialized) {
+      soundEngine.initAudio();
+    }
+    const promptText = transcript.trim() || 'A glowing fantasy sanctuary with floating crystals and portals';
+    const synthWorld = synthesizeWorldFromPrompt(promptText);
+    const requestId = `offline_req_${Date.now()}`;
+    useDreamStore.getState().beginGeneration(requestId);
+    useDreamStore.getState().setWorld(synthWorld, requestId, 0, true);
+  };
 
   const handleLoadPresetWorld = (presetWorld: WorldSpec) => {
     resetGeneration();
@@ -64,11 +78,18 @@ export const ErrorOverlay: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
+          <button
+            type="button"
+            onClick={handleSynthesizePrompt}
+            className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-lg shadow-cyan-500/20 cursor-pointer transition-all flex items-center justify-center gap-1.5"
+          >
+            <span>✨ Synthesize 10s Video of My Idea</span>
+          </button>
           <button
             type="button"
             onClick={resetGeneration}
-            className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-all"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-all"
           >
             Dismiss
           </button>

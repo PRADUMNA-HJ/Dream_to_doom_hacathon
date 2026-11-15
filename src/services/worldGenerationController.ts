@@ -1,5 +1,6 @@
 import { useDreamStore } from '../store/useDreamStore';
 import { generateWorld, WorldApiError } from './worldApi';
+import { synthesizeWorldFromPrompt } from './proceduralPromptSynthesizer';
 import type { WorldSpec } from '../shared/schemas/worldSchema';
 
 export interface ControllerOptions {
@@ -82,6 +83,25 @@ export async function generateWorldFromTranscript(
 
     if (err instanceof WorldApiError) {
       errorMessage = `[${err.code}] ${err.message}`;
+
+      // Graceful offline fallback: if server lacks GEMINI_API_KEY or is offline,
+      // procedurally synthesize a customized 3D world matching the user's idea!
+      if (err.code === 'MISSING_API_KEY' || err.code === 'AI_SERVICE_UNAVAILABLE') {
+        store.addTelemetryLog(
+          'offline-synthesizer',
+          `Synthesizing dynamic 3D scene from prompt: "${trimmed.slice(0, 40)}"...`
+        );
+        const synthWorld = synthesizeWorldFromPrompt(trimmed);
+        const committed = store.setWorld(synthWorld, requestId, durationMs, true);
+        if (committed) {
+          return {
+            success: true,
+            world: synthWorld,
+            requestId,
+            durationMs,
+          };
+        }
+      }
     } else if (err instanceof Error) {
       errorMessage = err.message;
     }

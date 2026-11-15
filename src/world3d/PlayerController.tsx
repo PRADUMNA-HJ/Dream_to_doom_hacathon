@@ -19,6 +19,7 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
   const lifecyclePhase = useDreamStore((state) => state.lifecyclePhase);
   const isPaused = useDreamStore((state) => state.isPaused);
   const playerHealth = useDreamStore((state) => state.playerHealth);
+  const viewMode = useDreamStore((state) => state.viewMode);
 
   const keys = useRef<{ [key: string]: boolean }>({});
 
@@ -108,9 +109,15 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
       return;
     }
 
-    if (!isPlayable) {
-      // Retain vertical gravity velocity but zero out horizontal velocity
+    if (!isPlayable || viewMode === 'cinematic') {
+      // Retain vertical gravity velocity but zero out horizontal velocity in cinematic or non-playable mode
       rigidBodyRef.current.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
+
+      // Subtle idle breathing animation for character in cinematic mode
+      if (avatarGroupRef.current && viewMode === 'cinematic') {
+        const time = state.clock.getElapsedTime();
+        avatarGroupRef.current.position.y = Math.sin(time * 2.0) * 0.03;
+      }
       return;
     }
 
@@ -164,14 +171,16 @@ export const PlayerController: React.FC<PlayerControllerProps> = ({ spawnPoint }
       keys.current['Space'] = false; // Prevent repeat jump in single keydown
     }
 
-    // Smooth third-person camera follow
-    const targetCameraPos = new THREE.Vector3(
-      translation.x,
-      translation.y + 4.2,
-      translation.z + 7.5
-    );
-    camera.position.lerp(targetCameraPos, 0.08);
-    camera.lookAt(translation.x, translation.y + 1.2, translation.z);
+    // Smooth third-person camera follow (only in Interactive mode; Cinematic mode uses CinematicCameraController)
+    if (viewMode === 'interactive') {
+      const targetCameraPos = new THREE.Vector3(
+        translation.x,
+        translation.y + 4.2,
+        translation.z + 7.5
+      );
+      camera.position.lerp(targetCameraPos, 0.08);
+      camera.lookAt(translation.x, translation.y + 1.2, translation.z);
+    }
   });
 
   return (

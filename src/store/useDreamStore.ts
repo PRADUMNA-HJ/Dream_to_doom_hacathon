@@ -3,6 +3,15 @@ import type { WorldSpec, GameEvent, GameEventType } from '../shared/schemas/worl
 
 export type GenerationStatus = 'idle' | 'generating' | 'validating' | 'success' | 'error';
 
+export type ViewMode = 'cinematic' | 'interactive';
+
+export interface CinematicState {
+  viewMode: ViewMode;
+  cinematicProgress: number; // 0 to 10 seconds
+  isCinematicPlaying: boolean;
+  cinematicDuration: number; // Default: 10 seconds
+}
+
 export type LifecyclePhase =
   | 'idle'
   | 'listening'
@@ -64,9 +73,16 @@ export interface DreamStoreState
   extends VoiceInputState,
     WorldGenerationState,
     GameplayState,
-    AudioSystemState {
+    AudioSystemState,
+    CinematicState {
   // Bounded event log (non-destructive for multiple consumers)
   activeEvents: GameEvent[];
+
+  // 10-Second Cinematic Video Showcase Actions
+  setViewMode: (mode: ViewMode) => void;
+  setCinematicProgress: (progress: number | ((prev: number) => number)) => void;
+  setCinematicPlaying: (isPlaying: boolean) => void;
+  restartCinematic: () => void;
 
   // Voice Input Actions (Person 3)
   setTranscript: (transcript: string) => void;
@@ -158,6 +174,12 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   isMuted: false,
   audioVolume: 0.75,
 
+  // 10-Second Cinematic Video Showcase State
+  viewMode: 'cinematic',
+  cinematicProgress: 0,
+  isCinematicPlaying: true,
+  cinematicDuration: 10,
+
   // Event Log
   activeEvents: [],
 
@@ -244,7 +266,12 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
+      viewMode: 'cinematic',
+      cinematicProgress: 0,
+      isCinematicPlaying: true,
     });
+
+    get().addTelemetryLog('cinematic-started', '10-Second Cinematic Video Showcase initialized.');
 
     // Automatically emit event for Person 2 and Person 3
     get().emitEvent({
@@ -331,6 +358,28 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   setAudioInitialized: (isAudioInitialized) => set({ isAudioInitialized }),
   setMuted: (isMuted) => set({ isMuted }),
   setAudioVolume: (audioVolume) => set({ audioVolume: Math.max(0, Math.min(1, audioVolume)) }),
+
+  // 10-Second Cinematic Video Showcase Actions
+  setViewMode: (viewMode) => set({ viewMode }),
+
+  setCinematicProgress: (progressOrUpdater) =>
+    set((state) => {
+      const nextProgress =
+        typeof progressOrUpdater === 'function'
+          ? progressOrUpdater(state.cinematicProgress)
+          : progressOrUpdater;
+      const clamped = Math.max(0, Math.min(state.cinematicDuration, nextProgress));
+      return { cinematicProgress: clamped };
+    }),
+
+  setCinematicPlaying: (isCinematicPlaying) => set({ isCinematicPlaying }),
+
+  restartCinematic: () =>
+    set({
+      cinematicProgress: 0,
+      isCinematicPlaying: true,
+      viewMode: 'cinematic',
+    }),
 
   // Gameplay Actions
   startGame: () =>
@@ -449,6 +498,9 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
+      viewMode: 'cinematic',
+      cinematicProgress: 0,
+      isCinematicPlaying: true,
       telemetryLogs: [],
     }),
 
@@ -474,6 +526,9 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       isPaused: false,
       score: 0,
       playerHealth: 100,
+      viewMode: 'cinematic',
+      cinematicProgress: 0,
+      isCinematicPlaying: true,
       activeEvents: [],
       telemetryLogs: [],
     }),

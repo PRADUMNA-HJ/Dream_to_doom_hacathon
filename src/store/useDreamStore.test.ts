@@ -182,4 +182,34 @@ describe('useDreamStore (Zustand Global State)', () => {
     expect(restarted.collectedEntityIds).toEqual([]);
     expect(restarted.isGameStarted).toBe(true);
   });
+
+  it('manages 10-second cinematic video showcase state and dual mode switching', () => {
+    const store = useDreamStore.getState();
+    expect(store.viewMode).toBe('cinematic');
+    expect(store.cinematicProgress).toBe(0);
+    expect(store.isCinematicPlaying).toBe(true);
+    expect(store.cinematicDuration).toBe(10);
+
+    // Progress updates
+    store.setCinematicProgress(4.5);
+    expect(useDreamStore.getState().cinematicProgress).toBe(4.5);
+
+    // Clamps within [0, 10]
+    store.setCinematicProgress(15);
+    expect(useDreamStore.getState().cinematicProgress).toBe(10);
+    store.setCinematicProgress(-5);
+    expect(useDreamStore.getState().cinematicProgress).toBe(0);
+
+    // Dual Mode switching
+    store.setViewMode('interactive');
+    expect(useDreamStore.getState().viewMode).toBe('interactive');
+
+    // Restart cinematic resets progress and switches back to cinematic mode
+    store.setCinematicProgress(9.2);
+    store.restartCinematic();
+    const restarted = useDreamStore.getState();
+    expect(restarted.viewMode).toBe('cinematic');
+    expect(restarted.cinematicProgress).toBe(0);
+    expect(restarted.isCinematicPlaying).toBe(true);
+  });
 });

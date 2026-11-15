@@ -13,7 +13,8 @@
 [![Google Gemini API](https://img.shields.io/badge/Google_Gemini_3.8_Flash-8E75C2?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Tone.js](https://img.shields.io/badge/Tone.js_14.8-F5A623?style=for-the-badge)](https://tonejs.github.io/)
 [![Vercel Serverless](https://img.shields.io/badge/Vercel_Serverless-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-108%2F108%20Passed-brightgreen?style=for-the-badge)](https://github.com/PRADUMNA-HJ/Dream_to_doom_hacathon)
+[![Cinematic Video Showcase](https://img.shields.io/badge/Dual_Mode-10s_Video_Showcase-cyan?style=for-the-badge)](https://github.com/PRADUMNA-HJ/Dream_to_doom_hacathon)
+[![Tests Passing](https://img.shields.io/badge/Tests-114%2F114%20Passed-brightgreen?style=for-the-badge)](https://github.com/PRADUMNA-HJ/Dream_to_doom_hacathon)
 
 ---
 
@@ -61,6 +62,9 @@ Spoken Voice ──> Gemini Flash (JSON Scene Graph) ──> Zod Validator ─�
 
 ## 4. Key Features
 
+- **🎬 10-Second Cinematic Video Showcase:** When you input an idea, the camera automatically performs an ultra-smooth, 3-act drone fly-through across the generated 3D world (0.0s to 10.0s), with cinema letterboxing, live timecode, scrubber seek bar, replay, and shot jump controls.
+- **🔄 Dual Mode (Video Showcase $\leftrightarrow$ Interactive Play):** Instant toggle between the 10-second automated video experience and third-person interactive gameplay (WASD + jump).
+- **⚡ Offline Procedural Prompt Synthesizer:** Instantly creates a customized 3D world directly matching your prompt keywords even without a Gemini API key or internet connection.
 - **Multilingual Speech Recognition:** Real-time speech-to-text supporting 8 languages with native scripts.
 - **Web Audio Live Waveform Visualizer:** Real-time microphone audio frequency analysis via `AudioContext` and `AnalyserNode`.
 - **Serverless AI Gateway:** Universal `/api/generate-world` serverless function with zero client-side credential exposure.
@@ -89,7 +93,7 @@ Spoken Voice ──> Gemini Flash (JSON Scene Graph) ──> Zod Validator ─�
 | **Sensory Audio** | Tone.js 14.8 | Polyphonic synthesis, master compression/limiting bus, procedural SFX |
 | **Voice Processing** | Web Speech API, Web Audio API (`AnalyserNode`) | Speech-to-text, live frequency visualizer, transcript editing |
 | **Serverless Backend** | Vercel Serverless Functions (`api/generate-world.ts`) | Edge proxy protecting `GEMINI_API_KEY`, Node HTTP stream handling |
-| **Testing** | Vitest 2.1 | 108 unit and integration tests across 14 test suites |
+| **Testing** | Vitest 2.1 | 114 unit and integration tests across 15 test suites |
 
 ---
 
@@ -308,7 +312,7 @@ npm run dev
 ## 14. Testing & Quality Assurance
 
 ```bash
-# Run complete test suite (108 unit and integration tests)
+# Run complete test suite (114 unit and integration tests across 15 suites)
 npm test
 
 # Run TypeScript strict type verification

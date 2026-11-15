@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import type { WorldSpec } from '../shared/schemas/worldSchema';
 import { ModelInstance } from './ModelInstance';
 import { PlayerController } from './PlayerController';
+import { CinematicCameraController } from './CinematicCameraController';
 import { useDreamStore } from '../store/useDreamStore';
 import { eventBus } from '../shared/events/eventBus';
 
@@ -192,6 +193,9 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
       {world.entities.map((entity) => (
         <ModelInstance key={entity.id} entity={entity} />
       ))}
+
+      {/* 10-Second Cinematic Drone Tour Controller */}
+      <CinematicCameraController />
 
       {/* Player Character Controller */}
       <PlayerController spawnPoint={world.spawnPoint} />
