@@ -12,6 +12,7 @@ interface ModelInstanceProps {
 
 export const ModelInstance: React.FC<ModelInstanceProps> = ({ entity }) => {
   const lastDamageTimeRef = useRef<number>(0);
+  const lastPortalTimeRef = useRef<number>(0);
   const isCollected = useDreamStore((state) => state.collectedEntityIds.includes(entity.id));
   const collectEntity = useDreamStore((state) => state.collectEntity);
   const playerHealth = useDreamStore((state) => state.playerHealth);
@@ -29,7 +30,11 @@ export const ModelInstance: React.FC<ModelInstanceProps> = ({ entity }) => {
           soundEngine.playEventSfx('item-collected');
           eventBus.publish({
             type: 'item-collected',
-            payload: { entityId: entity.id, asset: entity.asset },
+            payload: {
+              entityId: entity.id,
+              asset: entity.asset,
+              position: entity.position,
+            },
           });
         }
         break;
@@ -51,13 +56,25 @@ export const ModelInstance: React.FC<ModelInstanceProps> = ({ entity }) => {
         break;
       }
 
-      case 'portal':
-        eventBus.publish({
-          type: 'portal-entered',
-          payload: { entityId: entity.id },
-        });
-        soundEngine.playEventSfx('portal-entered');
+      case 'portal': {
+        const now = performance.now();
+        // 2000ms cooldown to avoid instant re-teleport loop
+        if (now - lastPortalTimeRef.current >= 2000) {
+          lastPortalTimeRef.current = now;
+          // Target sanctuary high platform or safe forward offset
+          const destination =
+            entity.position.x === 0 && entity.position.z <= -20
+              ? { x: 0, y: 3.5, z: -16 }
+              : { x: entity.position.x, y: entity.position.y + 1.5, z: entity.position.z + 6 };
+
+          soundEngine.playEventSfx('portal-entered');
+          eventBus.publish({
+            type: 'portal-entered',
+            payload: { entityId: entity.id, destination },
+          });
+        }
         break;
+      }
     }
   };
 

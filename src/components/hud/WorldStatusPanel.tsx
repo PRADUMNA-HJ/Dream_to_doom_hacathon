@@ -6,8 +6,14 @@ export const WorldStatusPanel: React.FC = () => {
   const score = useDreamStore((state) => state.score);
   const playerHealth = useDreamStore((state) => state.playerHealth);
   const isGameStarted = useDreamStore((state) => state.isGameStarted);
+  const collectedEntityIds = useDreamStore((state) => state.collectedEntityIds);
 
   if (!world) return null;
+
+  const totalCrystals = world.entities.filter((e) => e.interaction === 'collectible').length;
+  const collectedCrystals = world.entities.filter(
+    (e) => e.interaction === 'collectible' && collectedEntityIds.includes(e.id)
+  ).length;
 
   return (
     <div className="bg-slate-950/85 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4 shadow-2xl max-w-xs w-full space-y-3 font-sans pointer-events-auto">
@@ -26,10 +32,10 @@ export const WorldStatusPanel: React.FC = () => {
         </span>
       </div>
 
-      {/* Gameplay Stats: Health & Score */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      {/* Gameplay Stats: Health, Score & Crystals */}
+      <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+          <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-1">
             Health
           </div>
           <div className="flex items-center gap-1.5">
@@ -50,11 +56,20 @@ export const WorldStatusPanel: React.FC = () => {
         </div>
 
         <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">
+          <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">
             Score
           </div>
-          <div className="font-mono text-base font-black text-amber-400">
+          <div className="font-mono text-sm font-black text-amber-400">
             ★ {score}
+          </div>
+        </div>
+
+        <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+          <div className="text-[9px] font-mono text-slate-400 uppercase tracking-wider mb-0.5">
+            Crystals
+          </div>
+          <div className="font-mono text-xs font-bold text-cyan-300">
+            💎 {collectedCrystals}/{totalCrystals}
           </div>
         </div>
       </div>
@@ -77,11 +92,16 @@ export const WorldStatusPanel: React.FC = () => {
 
       {/* Controls Guide */}
       {isGameStarted && (
-        <div className="text-[10px] font-mono text-slate-500 text-center border-t border-slate-800/60 pt-2">
-          Move: <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300">W</kbd>
-          <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 ml-1">A</kbd>
-          <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 ml-1">S</kbd>
-          <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 ml-1">D</kbd> | Jump: <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300">Space</kbd>
+        <div className="text-[10px] font-mono text-slate-400 text-center border-t border-slate-800/60 pt-2 space-y-0.5">
+          <div>
+            Move: <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200">W</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200 ml-0.5">A</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200 ml-0.5">S</kbd>
+            <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200 ml-0.5">D</kbd> | Jump: <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200">Space</kbd>
+          </div>
+          <div className="text-[9px] text-slate-500">
+            Sprint: <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-300">Shift</kbd> | Portal: Step to Warp
+          </div>
         </div>
       )}
     </div>

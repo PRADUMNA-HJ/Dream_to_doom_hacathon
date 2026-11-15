@@ -171,6 +171,7 @@ export const GameEventTypeEnum = z.enum([
   'player-damaged',
   'portal-entered',
   'game-over',
+  'game-started',
 ]);
 export type GameEventType = z.infer<typeof GameEventTypeEnum>;
 

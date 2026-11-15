@@ -247,6 +247,7 @@ export class SoundEngine {
       'player-damaged': 'object_destroyed',
       'portal-entered': 'environment_changed',
       'game-over': 'object_destroyed',
+      'game-started': 'world_generation_completed',
     };
     const canonical = canonicalMap[type];
     if (canonical) {
