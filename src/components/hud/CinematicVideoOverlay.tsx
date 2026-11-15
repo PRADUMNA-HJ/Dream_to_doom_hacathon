@@ -1,15 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDreamStore } from '../../store/useDreamStore';
+import { useSpeechInput } from '../../sensory/useSpeechInput';
+import { generateWorldFromTranscript } from '../../services/worldGenerationController';
+import { soundEngine } from '../../sensory/SoundEngine';
 
 export const CinematicVideoOverlay: React.FC = () => {
   const world = useDreamStore((state) => state.world);
-  const viewMode = useDreamStore((state) => state.viewMode);
   const cinematicProgress = useDreamStore((state) => state.cinematicProgress);
   const isCinematicPlaying = useDreamStore((state) => state.isCinematicPlaying);
-  const setViewMode = useDreamStore((state) => state.setViewMode);
   const setCinematicProgress = useDreamStore((state) => state.setCinematicProgress);
   const setCinematicPlaying = useDreamStore((state) => state.setCinematicPlaying);
   const restartCinematic = useDreamStore((state) => state.restartCinematic);
+  const resetSession = useDreamStore((state) => state.resetSession);
+  const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
+
+  const {
+    transcript,
+    isListening,
+    toggleListening,
+    setTranscript,
+    clearTranscript,
+  } = useSpeechInput();
+
+  const [bottomInput, setBottomInput] = useState('');
 
   if (!world) return null;
 
@@ -29,30 +42,24 @@ export const CinematicVideoOverlay: React.FC = () => {
     setCinematicPlaying(true);
   };
 
-  // If in interactive mode, provide a compact floating trigger to return to video showcase
-  if (viewMode === 'interactive') {
-    return (
-      <div className="absolute top-20 right-6 z-20 pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => {
-            setViewMode('cinematic');
-            restartCinematic();
-          }}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950/85 hover:bg-indigo-950/90 text-cyan-300 hover:text-cyan-200 border border-cyan-800/80 hover:border-cyan-500 shadow-xl backdrop-blur-md transition-all font-mono text-xs font-semibold cursor-pointer group"
-          title="Switch to automated 10-second cinematic drone video"
-        >
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 group-hover:animate-ping" />
-          <span>🎬 Watch 10s Video Showcase</span>
-        </button>
-      </div>
-    );
-  }
+  const handleNextPrompt = async (promptText?: string) => {
+    const textToSend = promptText || bottomInput || transcript;
+    if (!textToSend.trim()) return;
+
+    if (!isAudioInitialized) {
+      soundEngine.initAudio();
+    }
+
+    setTranscript(textToSend);
+    await generateWorldFromTranscript(textToSend);
+    setBottomInput('');
+    clearTranscript();
+  };
 
   return (
     <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between">
       {/* Top Cinema Letterbox Bar */}
-      <div className="w-full bg-gradient-to-b from-black via-black/95 to-transparent pt-3 pb-8 px-6 pointer-events-auto flex items-center justify-between gap-4">
+      <div className="w-full bg-gradient-to-b from-black via-black/90 to-transparent pt-3 pb-8 px-6 pointer-events-auto flex items-center justify-between gap-4">
         {/* Left: Recording Status & Timecode */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-950/70 border border-rose-800/80">
@@ -62,7 +69,7 @@ export const CinematicVideoOverlay: React.FC = () => {
               }`}
             />
             <span className="text-[10px] font-mono font-bold tracking-widest text-rose-300 uppercase">
-              {isCinematicPlaying ? 'REC • 10s Showcase' : isFinished ? 'Playback Ended' : 'Paused'}
+              {isCinematicPlaying ? 'REC • 10s Video' : isFinished ? '10s Ended' : 'Paused'}
             </span>
           </div>
           <div className="text-xs font-mono font-semibold text-slate-300">
@@ -72,44 +79,52 @@ export const CinematicVideoOverlay: React.FC = () => {
         </div>
 
         {/* Center: World Concept Title */}
-        <div className="hidden md:flex flex-col items-center max-w-md text-center">
+        <div className="hidden md:flex flex-col items-center max-w-lg text-center">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-white tracking-wide truncate max-w-xs">
+            <h2 className="text-sm font-bold text-white tracking-wide truncate max-w-md">
               {world.title}
             </h2>
             <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-indigo-950/80 border border-indigo-700/60 text-indigo-300 uppercase">
               {world.biome}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 italic truncate max-w-md">
+          <p className="text-[11px] text-slate-400 italic truncate max-w-lg">
             "{world.description}"
           </p>
         </div>
 
-        {/* Right: Switch to Interactive Mode button */}
+        {/* Right: Actions */}
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setViewMode('interactive')}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/40 text-xs font-mono font-bold transition-all cursor-pointer"
-            title="Switch from video showcase to interactive third-person player controller"
+            onClick={restartCinematic}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700 hover:border-cyan-500 text-xs font-mono font-medium transition-all cursor-pointer"
+            title="Replay 10-second video from start"
           >
-            <span>🎮 Switch to Interactive Play</span>
+            <span>↺ Replay</span>
+          </button>
+          <button
+            type="button"
+            onClick={resetSession}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-md text-xs font-mono font-bold transition-all cursor-pointer"
+            title="Create a new 10-second video for another idea"
+          >
+            <span>✨ New Idea</span>
           </button>
         </div>
       </div>
 
-      {/* Floating Center Completion Banner */}
+      {/* Floating Center Completion Banner at 10 seconds */}
       {isFinished && (
-        <div className="self-center pointer-events-auto bg-slate-950/90 border border-cyan-500/60 rounded-2xl p-4 shadow-2xl backdrop-blur-md flex flex-col sm:flex-row items-center gap-4 animate-fade-in mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xl shadow-lg shadow-cyan-500/20">
-              ✨
+        <div className="self-center pointer-events-auto bg-slate-950/95 border border-cyan-500/80 rounded-2xl p-5 shadow-[0_0_50px_rgba(6,182,212,0.25)] backdrop-blur-md flex flex-col sm:flex-row items-center gap-5 animate-fade-in mb-4 max-w-lg">
+          <div className="flex items-center gap-3 text-left">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shadow-cyan-500/20">
+              🎬
             </div>
             <div>
-              <div className="text-xs font-bold text-white">10-Second Showcase Complete!</div>
-              <div className="text-[11px] text-slate-400">
-                You can replay the cinematic fly-through or explore the 3D world interactively.
+              <div className="text-sm font-bold text-white">10-Second Video Showcase Complete!</div>
+              <div className="text-xs text-slate-400">
+                Replay the video or enter your next idea in the bar below!
               </div>
             </div>
           </div>
@@ -117,23 +132,23 @@ export const CinematicVideoOverlay: React.FC = () => {
             <button
               type="button"
               onClick={restartCinematic}
-              className="px-3 py-1.5 rounded-xl text-xs font-mono font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 hover:border-cyan-500 transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-md transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
             >
-              <span>↺ Replay Video</span>
+              <span>↺ Replay 10s</span>
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('interactive')}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center gap-1.5"
+              onClick={resetSession}
+              className="px-3 py-2 rounded-xl text-xs font-mono font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-cyan-500 transition-all cursor-pointer whitespace-nowrap"
             >
-              <span>🎮 Play in 3D</span>
+              <span>✨ New Idea</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Bottom Cinema Letterbox Bar & Video Scrubber */}
-      <div className="w-full bg-gradient-to-t from-black via-black/95 to-transparent pb-4 pt-8 px-6 pointer-events-auto space-y-2.5">
+      {/* Bottom Cinema Letterbox Bar & Controls & Quick Prompt Bar */}
+      <div className="w-full bg-gradient-to-t from-black via-black/95 to-transparent pb-4 pt-8 px-6 pointer-events-auto space-y-3">
         {/* Timeline Scrubber Bar */}
         <div
           onClick={handleSeek}
@@ -162,7 +177,7 @@ export const CinematicVideoOverlay: React.FC = () => {
           />
         </div>
 
-        {/* Video Controls Toolbar */}
+        {/* Video Controls & Shot Jump Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Playback action buttons */}
           <div className="flex items-center gap-2">
@@ -184,7 +199,7 @@ export const CinematicVideoOverlay: React.FC = () => {
               type="button"
               onClick={restartCinematic}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 transition-all font-mono cursor-pointer"
-              title="Restart 10s video tour from 0.0s"
+              title="Restart 10s video from 0.0s"
             >
               <span>↺ Start Over</span>
             </button>
@@ -215,12 +230,55 @@ export const CinematicVideoOverlay: React.FC = () => {
               🌀 6.8s Portal Rise
             </button>
           </div>
+        </div>
 
-          {/* Direct CTA */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-slate-400">
-              Dual Mode Active: <strong className="text-cyan-300">10s Showcase</strong>
-            </span>
+        {/* Quick Next Prompt Bar (Docked right at bottom for instant iteration) */}
+        <div className="pt-1">
+          <div className="flex items-center gap-2 max-w-2xl mx-auto bg-slate-900/90 border border-slate-800/90 rounded-xl p-1.5 shadow-lg">
+            {/* Mic button */}
+            <button
+              type="button"
+              onClick={() => toggleListening()}
+              className={`flex items-center justify-center w-8 h-8 rounded-lg font-bold transition-all cursor-pointer ${
+                isListening
+                  ? 'bg-rose-600 text-white animate-pulse'
+                  : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+              }`}
+              title="Click to speak your next idea"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 02-3 3z"
+                />
+              </svg>
+            </button>
+
+            {/* Input field */}
+            <input
+              type="text"
+              value={bottomInput || transcript}
+              onChange={(e) => {
+                setBottomInput(e.target.value);
+                setTranscript(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleNextPrompt();
+              }}
+              placeholder={isListening ? 'Listening...' : 'Type another idea to generate next 10s video...'}
+              className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+            />
+
+            {/* Generate button */}
+            <button
+              type="button"
+              onClick={() => handleNextPrompt()}
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white cursor-pointer transition-all"
+            >
+              🎬 Generate
+            </button>
           </div>
         </div>
       </div>

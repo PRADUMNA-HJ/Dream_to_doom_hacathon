@@ -11,9 +11,6 @@ export const TopNav: React.FC = () => {
   const isMuted = useDreamStore((state) => state.isMuted);
   const resetSession = useDreamStore((state) => state.resetSession);
   const world = useDreamStore((state) => state.world);
-  const isOfflineFallback = useDreamStore((state) => state.isOfflineFallback);
-  const viewMode = useDreamStore((state) => state.viewMode);
-  const setViewMode = useDreamStore((state) => state.setViewMode);
   const restartCinematic = useDreamStore((state) => state.restartCinematic);
   const [isArchOpen, setIsArchOpen] = useState(false);
   const [isAudioSuiteOpen, setIsAudioSuiteOpen] = useState(false);
@@ -49,11 +46,11 @@ export const TopNav: React.FC = () => {
                 Dream-to-Doom
               </h1>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase tracking-widest font-semibold">
-                Live Demo
+                10s Video Studio
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-sans">
-              Speak Your Imagination. Watch It Become Reality.
+              Instant 10-Second Idea Video Generator
             </p>
           </div>
         </div>
@@ -62,51 +59,18 @@ export const TopNav: React.FC = () => {
         <div className="flex items-center gap-3">
           <GenerationTimer />
           {world && (
-            <>
-              {/* Dual-Mode Showcase Switcher */}
-              <div className="flex items-center p-0.5 rounded-xl bg-slate-900 border border-slate-700/80 shadow-md">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setViewMode('cinematic');
-                    restartCinematic();
-                  }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
-                    viewMode === 'cinematic'
-                      ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-cyan-300'
-                  }`}
-                  title="Switch to 10-Second Cinematic Drone Tour"
-                >
-                  <span>🎬 10s Video</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('interactive')}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
-                    viewMode === 'interactive'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-indigo-300'
-                  }`}
-                  title="Switch to Interactive 3D Gameplay Mode"
-                >
-                  <span>🎮 Play Mode</span>
-                </button>
-              </div>
-
-              <div className="hidden lg:flex items-center gap-2 bg-indigo-950/60 border border-indigo-800/60 px-3 py-1 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                <span className="text-xs font-semibold text-indigo-200 truncate max-w-[140px]">{world.title}</span>
-                <span className="text-[10px] font-mono text-indigo-400 px-1.5 py-0.2 rounded bg-indigo-900/60">
-                  {world.biome}
-                </span>
-                {isOfflineFallback && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/90 text-amber-300 border border-amber-600/60 animate-pulse">
-                    Offline Mode
-                  </span>
-                )}
-              </div>
-            </>
+            <div className="flex items-center gap-2 bg-indigo-950/60 border border-indigo-800/60 px-3 py-1 rounded-xl">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs font-semibold text-indigo-200 truncate max-w-[160px]">{world.title}</span>
+              <button
+                type="button"
+                onClick={restartCinematic}
+                className="px-2 py-0.5 rounded bg-cyan-950 hover:bg-cyan-900 border border-cyan-700/80 text-[10px] font-mono text-cyan-300 transition-all cursor-pointer"
+                title="Replay 10s video from start"
+              >
+                ↺ Replay 10s
+              </button>
+            </div>
           )}
         </div>
 
@@ -150,9 +114,9 @@ export const TopNav: React.FC = () => {
               type="button"
               onClick={handleLoadDemoWorld}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
-              title="Instantly launch pre-built 3D demo world"
+              title="Launch sample 10-second 3D video showcase"
             >
-              <span>✨ Load Demo World</span>
+              <span>✨ Sample 10s Video</span>
             </button>
           )}
 

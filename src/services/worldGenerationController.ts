@@ -84,9 +84,16 @@ export async function generateWorldFromTranscript(
     if (err instanceof WorldApiError) {
       errorMessage = `[${err.code}] ${err.message}`;
 
-      // Graceful offline fallback: if server lacks GEMINI_API_KEY or is offline,
-      // procedurally synthesize a customized 3D world matching the user's idea!
-      if (err.code === 'MISSING_API_KEY' || err.code === 'AI_SERVICE_UNAVAILABLE') {
+      // Graceful on-the-spot synthesizer: if server lacks GEMINI_API_KEY, network fails, or returns server error,
+      // dynamically synthesize a customized 3D scene matching the user's idea on the spot!
+      if (
+        err.code === 'MISSING_API_KEY' ||
+        err.code === 'AI_SERVICE_UNAVAILABLE' ||
+        err.code === 'SERVER_ERROR' ||
+        err.code === 'HTTP_ERROR' ||
+        err.code === 'MALFORMED_RESPONSE' ||
+        err.code === 'API_ERROR'
+      ) {
         store.addTelemetryLog(
           'offline-synthesizer',
           `Synthesizing dynamic 3D scene from prompt: "${trimmed.slice(0, 40)}"...`
