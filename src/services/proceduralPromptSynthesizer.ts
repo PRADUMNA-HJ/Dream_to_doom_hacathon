@@ -55,6 +55,21 @@ export function synthesizeWorldFromPrompt(prompt: string): WorldSpec {
     dirIntensity = 1.4;
     weatherType = 'clear';
   } else if (
+    text.includes('dragon') ||
+    text.includes('monster') ||
+    text.includes('dinosaur')
+  ) {
+    biome = 'dark_castle';
+    mood = 'doom';
+    audioMood = 'chaotic';
+    skyColor = '#1a0505';
+    fogColor = '#3b0707';
+    groundColor = '#1c1917';
+    dirColor = '#ff4500';
+    ambientIntensity = 0.45;
+    dirIntensity = 1.6;
+    weatherType = 'fog';
+  } else if (
     text.includes('cyber') ||
     text.includes('neon') ||
     text.includes('city') ||

@@ -262,3 +262,4 @@ export const AnimatedChaseVignette: React.FC<AnimatedChaseVignetteProps> = ({
     </group>
   );
 };
+

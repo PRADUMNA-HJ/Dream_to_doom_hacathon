@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: dream-to-doom
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: GEMINI_API_KEY
+        sync: false

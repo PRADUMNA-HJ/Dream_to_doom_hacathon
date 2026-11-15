@@ -10,6 +10,7 @@ import { CinematicCameraController } from './CinematicCameraController';
 import { ThematicBackdrop } from './ThematicBackdrop';
 import { AtmosphericWeatherEffect } from './AtmosphericWeatherEffect';
 import { AnimatedChaseVignette } from './AnimatedChaseVignette';
+import { DragonBattleVignette } from './DragonBattleVignette';
 import { useDreamStore } from '../store/useDreamStore';
 import { eventBus } from '../shared/events/eventBus';
 
@@ -120,8 +121,14 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
       ? 'boy_chases_dog'
       : 'dog_chases_boy';
 
+  const isDragonBattle =
+    promptLower.includes('dragon') ||
+    promptLower.includes('dino') ||
+    promptLower.includes('monster fight');
+
   const hasSparkles =
     !isChaseScene &&
+    !isDragonBattle &&
     (world.biome === 'enchanted_forest' ||
       world.biome === 'crystal_cave' ||
       world.biome === 'cosmic_void' ||
@@ -223,6 +230,9 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
 
       {/* Animated Dog & Boy Chase Vignette */}
       <AnimatedChaseVignette active={isChaseScene} mode={chaseMode} />
+
+      {/* Animated Dragon Clash Vignette */}
+      <DragonBattleVignette active={isDragonBattle} />
 
       {/* Instanced World Entities */}
       {world.entities.map((entity) => (
