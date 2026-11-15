@@ -5,7 +5,15 @@
  */
 
 /** Supported language codes for speech recognition */
-export type SupportedLanguage = 'en-US' | 'ta-IN';
+export type SupportedLanguage =
+  | 'en-US'
+  | 'ta-IN'
+  | 'kn-IN'
+  | 'te-IN'
+  | 'mr-IN'
+  | 'bn-IN'
+  | 'ml-IN'
+  | 'hi-IN';
 
 /** Metadata description for supported languages */
 export interface LanguageOption {
@@ -18,6 +26,12 @@ export interface LanguageOption {
 export const SUPPORTED_LANGUAGES: readonly LanguageOption[] = [
   { code: 'en-US', label: 'English (US)', nativeLabel: 'English (United States)' },
   { code: 'ta-IN', label: 'Tamil (India)', nativeLabel: 'தமிழ் (இந்தியா)' },
+  { code: 'kn-IN', label: 'Kannada (India)', nativeLabel: 'ಕನ್ನಡ (ಭಾರತ)' },
+  { code: 'te-IN', label: 'Telugu (India)', nativeLabel: 'తెలుగు (భారతదేశం)' },
+  { code: 'mr-IN', label: 'Marathi (India)', nativeLabel: 'मराठी (भारत)' },
+  { code: 'bn-IN', label: 'Bengali (India)', nativeLabel: 'বাংলা (ভারত)' },
+  { code: 'ml-IN', label: 'Malayalam (India)', nativeLabel: 'മലയാളം (ഇന്ത്യ)' },
+  { code: 'hi-IN', label: 'Hindi (India)', nativeLabel: 'हिन्दी (भारत)' },
 ] as const;
 
 /** Lifecycle status of speech recognition engine */

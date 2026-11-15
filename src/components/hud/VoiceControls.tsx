@@ -5,10 +5,20 @@ import { useDreamStore } from '../../store/useDreamStore';
 import { soundEngine } from '../../sensory/SoundEngine';
 import { DEMO_PRESETS } from '../../shared/constants/demoPresets';
 import { VoiceController } from '../../sensory/components/VoiceController';
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../../sensory/types/speech.types';
 
 export const VoiceControls: React.FC = () => {
-  const { transcript, isListening, speechError, isSupported, toggleListening, setTranscript, clearTranscript } =
-    useSpeechInput();
+  const {
+    transcript,
+    isListening,
+    speechError,
+    isSupported,
+    currentLanguage,
+    setLanguage,
+    toggleListening,
+    setTranscript,
+    clearTranscript,
+  } = useSpeechInput();
   const lifecyclePhase = useDreamStore((state) => state.lifecyclePhase);
   const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
   const [typedInput, setTypedInput] = useState('');
@@ -35,11 +45,28 @@ export const VoiceControls: React.FC = () => {
 
   return (
     <div className="bg-slate-950/90 backdrop-blur-md rounded-2xl border border-slate-800/80 p-4 shadow-2xl max-w-xl w-full space-y-3.5">
-      {/* Header bar with Terminal toggle */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold">
-          Sensory Voice Engine
-        </span>
+      {/* Header bar with Language Selector & Terminal toggle */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold">
+            Sensory Voice Engine
+          </span>
+          {!isTerminalOpen && (
+            <select
+              value={currentLanguage}
+              onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+              disabled={isListening || isGenerating}
+              className="text-[10px] font-mono bg-slate-900 border border-slate-700/80 rounded px-1.5 py-0.5 text-cyan-300 focus:outline-none focus:border-cyan-400 cursor-pointer"
+              title="Select Speech Recognition Language"
+            >
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-slate-950 text-slate-200">
+                  {lang.label} ({lang.nativeLabel})
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setIsTerminalOpen(!isTerminalOpen)}
@@ -53,6 +80,7 @@ export const VoiceControls: React.FC = () => {
       {/* Mode A: Person 3's Full Cyberpunk Voice Terminal */}
       {isTerminalOpen ? (
         <VoiceController
+          initialLanguage={currentLanguage as SupportedLanguage}
           onSubmitPrompt={async (payload) => {
             await handleGenerate(payload.text);
           }}
@@ -69,7 +97,7 @@ export const VoiceControls: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={toggleListening}
+              onClick={() => toggleListening()}
               disabled={!isSupported || isGenerating}
               className={`flex items-center justify-center w-11 h-11 rounded-xl font-bold transition-all duration-300 cursor-pointer ${
                 isListening

@@ -43,6 +43,7 @@ export class SpeechController {
   private recognition: SpeechRecognitionInstance | null = null;
   private isSupported: boolean = false;
   private isSessionActive: boolean = false;
+  private currentLanguage: string = 'en-US';
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -55,7 +56,7 @@ export class SpeechController {
           this.recognition = new SpeechRecognitionCtor();
           this.recognition.continuous = false; // Single utterance mode for discrete world prompts
           this.recognition.interimResults = true;
-          this.recognition.lang = 'en-US';
+          this.recognition.lang = this.currentLanguage;
 
           this.recognition.onstart = () => {
             this.isSessionActive = true;
@@ -125,7 +126,18 @@ export class SpeechController {
     return this.isSessionActive;
   }
 
-  public startListening(): boolean {
+  public setLanguage(lang: string): void {
+    this.currentLanguage = lang;
+    if (this.recognition) {
+      this.recognition.lang = lang;
+    }
+  }
+
+  public getLanguage(): string {
+    return this.currentLanguage;
+  }
+
+  public startListening(lang?: string): boolean {
     if (!this.isSupported || !this.recognition) {
       useDreamStore.getState().setSpeechError(
         'Speech recognition is not supported in this browser. Please use the text input below.'
@@ -135,6 +147,12 @@ export class SpeechController {
 
     if (this.isSessionActive) {
       return true;
+    }
+
+    if (lang) {
+      this.setLanguage(lang);
+    } else {
+      this.recognition.lang = this.currentLanguage;
     }
 
     try {

@@ -4,6 +4,7 @@ import { GenerationTimer } from './GenerationTimer';
 import { soundEngine } from '../../sensory/SoundEngine';
 import { ArchitectureModal } from './ArchitectureModal';
 import { AudioSuiteModal } from './AudioSuiteModal';
+import { DEFAULT_MOCK_WORLD } from '../../shared/constants';
 
 export const TopNav: React.FC = () => {
   const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
@@ -19,6 +20,13 @@ export const TopNav: React.FC = () => {
     } else {
       soundEngine.setMuted(!isMuted);
     }
+  };
+
+  const handleLoadDemoWorld = async () => {
+    if (!isAudioInitialized) {
+      await soundEngine.initAudio();
+    }
+    useDreamStore.getState().setWorld(DEFAULT_MOCK_WORLD, 'demo_world');
   };
 
   return (
@@ -92,6 +100,17 @@ export const TopNav: React.FC = () => {
           >
             <span>{!isAudioInitialized ? '🔈 Enable Audio' : isMuted ? '🔇 Muted' : '🔊 Sound On'}</span>
           </button>
+
+          {!world && (
+            <button
+              type="button"
+              onClick={handleLoadDemoWorld}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+              title="Instantly launch pre-built 3D demo world"
+            >
+              <span>✨ Load Demo World</span>
+            </button>
+          )}
 
           <button
             type="button"

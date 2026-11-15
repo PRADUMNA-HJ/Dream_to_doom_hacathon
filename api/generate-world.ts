@@ -39,11 +39,20 @@ export default async function handler(
 
   // Helper to respond universally
   const sendResponse = (status: number, payload: unknown): Response | void => {
-    if (res && typeof res.status === 'function') {
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Cache-Control', 'no-store, max-age=0');
-      res.status(status).json(payload);
-      return;
+    if (res) {
+      if (typeof res.status === 'function') {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
+        res.status(status).json(payload);
+        return;
+      }
+      if ('statusCode' in res && typeof (res as any).end === 'function') {
+        (res as any).statusCode = status;
+        (res as any).setHeader('Content-Type', 'application/json');
+        (res as any).setHeader('Cache-Control', 'no-store, max-age=0');
+        (res as any).end(JSON.stringify(payload));
+        return;
+      }
     }
 
     return new Response(JSON.stringify(payload), {

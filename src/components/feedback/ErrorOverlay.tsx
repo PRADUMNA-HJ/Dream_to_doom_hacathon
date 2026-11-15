@@ -1,11 +1,22 @@
 import React from 'react';
 import { useDreamStore } from '../../store/useDreamStore';
+import { DEFAULT_MOCK_WORLD } from '../../shared/constants';
+import { soundEngine } from '../../sensory/SoundEngine';
 
 export const ErrorOverlay: React.FC = () => {
   const generationError = useDreamStore((state) => state.generationError);
   const resetGeneration = useDreamStore((state) => state.resetGeneration);
+  const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
 
   if (!generationError) return null;
+
+  const handleLoadDemo = () => {
+    resetGeneration();
+    if (!isAudioInitialized) {
+      soundEngine.initAudio();
+    }
+    useDreamStore.getState().setWorld(DEFAULT_MOCK_WORLD, 'demo_world');
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto">
@@ -26,6 +37,13 @@ export const ErrorOverlay: React.FC = () => {
             className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-white cursor-pointer transition-all"
           >
             Dismiss
+          </button>
+          <button
+            type="button"
+            onClick={handleLoadDemo}
+            className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 cursor-pointer transition-all"
+          >
+            Load Demo World
           </button>
         </div>
       </div>
