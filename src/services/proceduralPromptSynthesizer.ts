@@ -35,7 +35,26 @@ export function synthesizeWorldFromPrompt(prompt: string): WorldSpec {
   let dirIntensity = 1.2;
   let weatherType: WeatherType = 'clear';
 
-  if (
+  const isChase =
+    text.includes('dog') ||
+    text.includes('boy') ||
+    text.includes('chase') ||
+    text.includes('puppy') ||
+    text.includes('kid') ||
+    text.includes('pet');
+
+  if (isChase) {
+    biome = 'enchanted_forest';
+    mood = 'dream';
+    audioMood = 'calm';
+    skyColor = '#38bdf8';
+    fogColor = '#bae6fd';
+    groundColor = '#16a34a';
+    dirColor = '#fef08a';
+    ambientIntensity = 0.65;
+    dirIntensity = 1.4;
+    weatherType = 'clear';
+  } else if (
     text.includes('cyber') ||
     text.includes('neon') ||
     text.includes('city') ||
@@ -203,7 +222,75 @@ export function synthesizeWorldFromPrompt(prompt: string): WorldSpec {
     interaction: 'portal',
   });
 
-  if (biome === 'dark_castle') {
+  if (isChase) {
+    // Beautiful park trees lining both sides of the running pathway
+    const parkTrees = [
+      { x: -5.5, z: 4, s: 1.7 },
+      { x: 5.5, z: 2, s: 1.8 },
+      { x: -6.0, z: -4, s: 1.9 },
+      { x: 6.0, z: -6, s: 1.8 },
+      { x: -5.5, z: -12, s: 2.0 },
+      { x: 5.5, z: -14, s: 1.9 },
+      { x: -6.0, z: -20, s: 1.8 },
+      { x: 6.0, z: -20, s: 1.8 },
+    ];
+    parkTrees.forEach((t, idx) => {
+      entities.push({
+        id: `park_tree_${idx + 1}`,
+        asset: 'tree',
+        position: { x: t.x, y: 0, z: t.z },
+        rotation: { x: 0, y: idx * 0.9, z: 0 },
+        scale: { x: t.s, y: t.s * 1.2, z: t.s },
+        color: '#22c55e',
+        physics: 'fixed',
+        interaction: 'none',
+      });
+    });
+
+    // Park lampposts along the walkway
+    const parkLamps = [
+      { x: -3.2, z: 3 },
+      { x: 3.2, z: -5 },
+      { x: -3.2, z: -13 },
+      { x: 3.2, z: -19 },
+    ];
+    parkLamps.forEach((l, idx) => {
+      entities.push({
+        id: `park_lamp_${idx + 1}`,
+        asset: 'lamp',
+        position: { x: l.x, y: 0, z: l.z },
+        rotation: { x: 0, y: idx * 0.5, z: 0 },
+        scale: { x: 0.9, y: 1.1, z: 0.9 },
+        color: '#fef08a',
+        physics: 'fixed',
+        interaction: 'none',
+      });
+    });
+
+    // Park benches
+    entities.push(
+      {
+        id: 'park_bench_1',
+        asset: 'platform',
+        position: { x: -3.8, y: 0.3, z: -2 },
+        rotation: { x: 0, y: Math.PI / 2, z: 0 },
+        scale: { x: 1.2, y: 0.3, z: 0.6 },
+        color: '#78350f',
+        physics: 'fixed',
+        interaction: 'none',
+      },
+      {
+        id: 'park_bench_2',
+        asset: 'platform',
+        position: { x: 3.8, y: 0.3, z: -10 },
+        rotation: { x: 0, y: -Math.PI / 2, z: 0 },
+        scale: { x: 1.2, y: 0.3, z: 0.6 },
+        color: '#78350f',
+        physics: 'fixed',
+        interaction: 'none',
+      }
+    );
+  } else if (biome === 'dark_castle') {
     // --- CYBERPUNK METROPOLIS / HIGH-TECH ROOFTOP ---
     // High-rise towers right on the rooftop flanks
     entities.push(

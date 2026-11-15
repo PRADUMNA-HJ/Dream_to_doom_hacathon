@@ -9,6 +9,7 @@ import { PlayerController } from './PlayerController';
 import { CinematicCameraController } from './CinematicCameraController';
 import { ThematicBackdrop } from './ThematicBackdrop';
 import { AtmosphericWeatherEffect } from './AtmosphericWeatherEffect';
+import { AnimatedChaseVignette } from './AnimatedChaseVignette';
 import { useDreamStore } from '../store/useDreamStore';
 import { eventBus } from '../shared/events/eventBus';
 
@@ -104,12 +105,28 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
     return () => clearTimeout(timer);
   }, [worldRevision, notifySceneReady, notifyPhysicsReady]);
 
+  const promptLower = (world.title + ' ' + world.description).toLowerCase();
+  const isChaseScene =
+    promptLower.includes('dog') ||
+    promptLower.includes('boy') ||
+    promptLower.includes('chase') ||
+    promptLower.includes('puppy') ||
+    promptLower.includes('pet');
+  const chaseMode =
+    promptLower.includes('boy chasing dog') ||
+    promptLower.includes('boy chase dog') ||
+    promptLower.includes('boy chases dog') ||
+    promptLower.includes('boy after dog')
+      ? 'boy_chases_dog'
+      : 'dog_chases_boy';
+
   const hasSparkles =
-    world.biome === 'enchanted_forest' ||
-    world.biome === 'crystal_cave' ||
-    world.biome === 'cosmic_void' ||
-    world.mood === 'dream' ||
-    world.mood === 'surreal';
+    !isChaseScene &&
+    (world.biome === 'enchanted_forest' ||
+      world.biome === 'crystal_cave' ||
+      world.biome === 'cosmic_void' ||
+      world.mood === 'dream' ||
+      world.mood === 'surreal');
 
   return (
     <>
@@ -203,6 +220,9 @@ export const WorldRenderer: React.FC<WorldRendererProps> = ({ world, worldRevisi
 
       {/* Interactive Crystal Collection Particle Bursts */}
       <CollectionBurstManager />
+
+      {/* Animated Dog & Boy Chase Vignette */}
+      <AnimatedChaseVignette active={isChaseScene} mode={chaseMode} />
 
       {/* Instanced World Entities */}
       {world.entities.map((entity) => (
