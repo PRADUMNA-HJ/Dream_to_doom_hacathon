@@ -107,6 +107,35 @@ const AlertTriangleIcon: React.FC<{ className?: string }> = ({ className = 'w-5 
   </svg>
 );
 
+const EditIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+
+const SparklesIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+  </svg>
+);
+
 // Status Badge Helper
 const getStatusBadge = (status: SpeechRecognitionStatus, isSupported: boolean) => {
   if (!isSupported) {
@@ -170,6 +199,17 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
   const manualInputId = useId();
   const languageRef = useRef<SupportedLanguage | string>(initialLanguage);
 
+  // Web Audio API Analyzer for real mic waveform visualization
+  const [realAudioLevels, setRealAudioLevels] = useState<number[]>([25, 45, 70, 40, 65, 30, 50]);
+  const [hasRealAudioStream, setHasRealAudioStream] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+
+  // Transcript editing states
+  const [isEditingTranscript, setIsEditingTranscript] = useState(false);
+  const [editedTranscript, setEditedTranscript] = useState('');
+
   // Unified callback for voice transcript that dispatches distinguishable metadata
   const handleVoiceFinalTranscript = useCallback(
     (finalizedText: string) => {
@@ -210,6 +250,120 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
   useEffect(() => {
     languageRef.current = language;
   }, [language]);
+
+  // Keep editedTranscript in sync with incoming speech when not actively editing
+  useEffect(() => {
+    if (!isEditingTranscript) {
+      setEditedTranscript(transcript);
+    }
+  }, [transcript, isEditingTranscript]);
+
+  // Real-time microphone audio visualizer loop with full cleanup
+  useEffect(() => {
+    if (!isListening) {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
+      setHasRealAudioStream(false);
+      return;
+    }
+
+    let isMounted = true;
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true, video: false })
+        .then((stream) => {
+          if (!isMounted || !isListening) {
+            stream.getTracks().forEach((t) => t.stop());
+            return;
+          }
+          mediaStreamRef.current = stream;
+          const AudioContextClass =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          if (!AudioContextClass) return;
+
+          const ctx = new AudioContextClass();
+          audioContextRef.current = ctx;
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 64;
+          analyser.smoothingTimeConstant = 0.8;
+          const source = ctx.createMediaStreamSource(stream);
+          source.connect(analyser);
+
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          const updateWaveform = () => {
+            if (!isMounted) return;
+            analyser.getByteFrequencyData(dataArray);
+
+            const bands: number[] = [];
+            const step = Math.max(1, Math.floor(bufferLength / 7));
+            for (let i = 0; i < 7; i++) {
+              const val = dataArray[i * step] || 0;
+              const heightPct = Math.max(15, Math.min(100, Math.round((val / 255) * 100)));
+              bands.push(heightPct);
+            }
+            setRealAudioLevels(bands);
+            setHasRealAudioStream(true);
+            animFrameRef.current = requestAnimationFrame(updateWaveform);
+          };
+
+          updateWaveform();
+        })
+        .catch(() => {
+          // Gracefully fall back to CSS pulse waveform if getUserMedia is denied or unavailable
+          setHasRealAudioStream(false);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+        audioContextRef.current = null;
+      }
+    };
+  }, [isListening]);
+
+  // Direct trigger to generate world from terminal
+  const handleTriggerGenerate = useCallback(() => {
+    const textToSubmit = isEditingTranscript
+      ? editedTranscript.trim()
+      : (editedTranscript || transcript).trim();
+    if (!textToSubmit) return;
+
+    if (isListening) {
+      stopListening();
+    }
+    setIsEditingTranscript(false);
+
+    onFinalTranscript?.(textToSubmit);
+    onSubmitPrompt?.({
+      text: textToSubmit,
+      source: isEditingTranscript ? 'manual' : 'voice',
+      language: languageRef.current,
+      timestamp: Date.now(),
+    });
+  }, [editedTranscript, isEditingTranscript, isListening, onFinalTranscript, onSubmitPrompt, stopListening, transcript]);
 
   // Handle manual fallback submit with distinguishable source: 'manual'
   const handleManualSubmit = useCallback(
@@ -331,22 +485,27 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
           )}
         </p>
 
-        {/* Dynamic Simulated Audio Waveform Bars */}
+        {/* Dynamic Microphone Waveform Analyzer Bars */}
         <div
           className={`flex items-center justify-center space-x-1.5 h-6 mt-3 transition-opacity duration-300 ${
             isListening ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-hidden="true"
         >
-          {[40, 75, 100, 60, 90, 45, 80].map((height, idx) => (
+          {realAudioLevels.map((height, idx) => (
             <span
               key={idx}
               style={{
                 height: `${height}%`,
-                animationDelay: `${idx * 0.12}s`,
-                animationDuration: '0.8s',
+                transition: hasRealAudioStream ? 'height 0.08s ease' : undefined,
+                animationDelay: !hasRealAudioStream ? `${idx * 0.12}s` : undefined,
+                animationDuration: !hasRealAudioStream ? '0.8s' : undefined,
               }}
-              className="w-1 rounded-full bg-gradient-to-t from-cyan-500 to-red-400 animate-pulse"
+              className={`w-1 rounded-full ${
+                hasRealAudioStream
+                  ? 'bg-gradient-to-t from-cyan-400 to-indigo-400'
+                  : 'bg-gradient-to-t from-cyan-500 to-red-400 animate-pulse'
+              }`}
             />
           ))}
         </div>
@@ -373,7 +532,15 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
 
         {/* Transcript Content Area */}
         <div className="text-sm md:text-base leading-relaxed break-words font-mono">
-          {transcript || interimTranscript ? (
+          {isEditingTranscript ? (
+            <textarea
+              value={editedTranscript}
+              onChange={(e) => setEditedTranscript(e.target.value)}
+              rows={2}
+              className="w-full text-xs md:text-sm bg-slate-950 border border-cyan-500/60 rounded-lg p-2.5 text-cyan-100 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-mono resize-none"
+              placeholder="Edit recognized speech prompt..."
+            />
+          ) : (transcript || interimTranscript) ? (
             <p>
               <span className="text-slate-100 font-medium">{transcript}</span>
               {interimTranscript && (
@@ -389,6 +556,34 @@ export const VoiceController: React.FC<VoiceControllerProps> = ({
             </p>
           )}
         </div>
+
+        {/* Action Controls for Transcript: Edit & Direct Generate */}
+        {(transcript || editedTranscript) && (
+          <div className="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => {
+                if (!isEditingTranscript) {
+                  setEditedTranscript(transcript);
+                }
+                setIsEditingTranscript(!isEditingTranscript);
+              }}
+              className="inline-flex items-center space-x-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-sans transition cursor-pointer"
+            >
+              <EditIcon className="w-3.5 h-3.5" />
+              <span>{isEditingTranscript ? 'Done Editing' : 'Edit Transcript'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleTriggerGenerate}
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-[0_0_15px_rgba(6,182,212,0.4)] cursor-pointer active:scale-95"
+            >
+              <SparklesIcon className="w-3.5 h-3.5" />
+              <span>Generate World</span>
+            </button>
+          </div>
+        )}
 
         {/* Telemetry Metrics Footer */}
         <div className="mt-4 pt-2.5 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">

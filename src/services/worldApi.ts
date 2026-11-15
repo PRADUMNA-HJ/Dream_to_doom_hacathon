@@ -1,5 +1,9 @@
 import { WorldSpecSchema, type WorldSpec } from '../shared/schemas/worldSchema';
-import { DEFAULT_MOCK_WORLD } from '../shared/constants';
+import {
+  DEFAULT_MOCK_WORLD,
+  CYBERPUNK_ROOFTOP_PRESET_WORLD,
+  FLOATING_ISLANDS_PRESET_WORLD,
+} from '../shared/constants';
 import type {
   GenerateWorldRequest,
   GenerateWorldApiResponse,
@@ -40,10 +44,18 @@ export async function generateWorld(
 
   // Explicit opt-in dev mock (for offline UI & component integration testing)
   if (options.useDevMock) {
+    const lower = trimmed.toLowerCase();
+    let preset = DEFAULT_MOCK_WORLD;
+    if (lower.includes('cyberpunk') || lower.includes('rooftop')) {
+      preset = CYBERPUNK_ROOFTOP_PRESET_WORLD;
+    } else if (lower.includes('floating') || lower.includes('island')) {
+      preset = FLOATING_ISLANDS_PRESET_WORLD;
+    }
+
     return {
-      ...DEFAULT_MOCK_WORLD,
+      ...preset,
       id: `world-mock-${Date.now()}`,
-      title: `Mock: ${trimmed.slice(0, 30)}`,
+      title: preset === DEFAULT_MOCK_WORLD ? `Mock: ${trimmed.slice(0, 30)}` : preset.title,
     };
   }
 

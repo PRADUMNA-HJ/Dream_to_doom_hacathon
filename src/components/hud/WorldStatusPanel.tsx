@@ -7,6 +7,7 @@ export const WorldStatusPanel: React.FC = () => {
   const playerHealth = useDreamStore((state) => state.playerHealth);
   const isGameStarted = useDreamStore((state) => state.isGameStarted);
   const collectedEntityIds = useDreamStore((state) => state.collectedEntityIds);
+  const isOfflineFallback = useDreamStore((state) => state.isOfflineFallback);
 
   if (!world) return null;
 
@@ -20,9 +21,16 @@ export const WorldStatusPanel: React.FC = () => {
       {/* Header & Biome */}
       <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
         <div>
-          <h3 className="text-sm font-bold text-white tracking-tight leading-tight">
-            {world.title}
-          </h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-bold text-white tracking-tight leading-tight">
+              {world.title}
+            </h3>
+            {isOfflineFallback && (
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-700 uppercase tracking-wider shrink-0 animate-pulse">
+                Offline
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
             {world.description}
           </p>

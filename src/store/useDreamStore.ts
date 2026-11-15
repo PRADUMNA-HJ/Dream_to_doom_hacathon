@@ -40,6 +40,7 @@ export interface WorldGenerationState {
   generationStartedAt: number | null;
   generationCompletedAt: number | null;
   serverGenerationTimeMs: number | null;
+  isOfflineFallback: boolean;
   isSceneReady: boolean;
   isPhysicsReady: boolean;
   telemetryLogs: TelemetryLogItem[];
@@ -77,7 +78,13 @@ export interface DreamStoreState
   beginGeneration: (requestId: string) => void;
   setGenerationStatus: (status: GenerationStatus) => void;
   setLifecyclePhase: (phase: LifecyclePhase) => void;
-  setWorld: (world: WorldSpec, responseRequestId: string, serverGenerationTimeMs?: number) => boolean;
+  setOfflineFallback: (isOffline: boolean) => void;
+  setWorld: (
+    world: WorldSpec,
+    responseRequestId: string,
+    serverGenerationTimeMs?: number,
+    isOfflineFallback?: boolean
+  ) => boolean;
   failGeneration: (error: string, responseRequestId: string) => boolean;
   resetGeneration: () => void;
 
@@ -134,6 +141,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
   generationStartedAt: null,
   generationCompletedAt: null,
   serverGenerationTimeMs: null,
+  isOfflineFallback: false,
   isSceneReady: false,
   isPhysicsReady: false,
   telemetryLogs: [],
@@ -208,14 +216,19 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
 
   setLifecyclePhase: (lifecyclePhase) => set({ lifecyclePhase }),
 
-  setWorld: (world, responseRequestId, serverGenerationTimeMs) => {
+  setOfflineFallback: (isOfflineFallback) => set({ isOfflineFallback }),
+
+  setWorld: (world, responseRequestId, serverGenerationTimeMs, isOfflineFallback = false) => {
     const currentRequestId = get().requestId;
     if (responseRequestId !== currentRequestId) {
       return false;
     }
 
     const nextRevision = get().worldRevision + 1;
-    get().addTelemetryLog('ai-response-received', `World generated: "${world.title}" (${world.biome}).`);
+    get().addTelemetryLog(
+      'ai-response-received',
+      `World generated: "${world.title}" (${world.biome})${isOfflineFallback ? ' [Offline Demo Mode]' : ''}.`
+    );
     get().addTelemetryLog('schema-validation-completed', `Scene graph validated with ${world.entities.length} entities.`);
     get().addTelemetryLog('loading-assets', 'Hydrating 3D primitives and colliders...');
 
@@ -227,6 +240,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       generationError: null,
       generationCompletedAt: Date.now(),
       serverGenerationTimeMs: serverGenerationTimeMs ?? null,
+      isOfflineFallback,
       collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
@@ -267,6 +281,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       requestId: null,
       generationStartedAt: null,
       generationCompletedAt: null,
+      isOfflineFallback: false,
       isSceneReady: false,
       isPhysicsReady: false,
     }),
@@ -430,6 +445,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       generationStartedAt: null,
       generationCompletedAt: null,
       serverGenerationTimeMs: null,
+      isOfflineFallback: false,
       collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,
@@ -450,6 +466,7 @@ export const useDreamStore = create<DreamStoreState>((set, get) => ({
       generationStartedAt: null,
       generationCompletedAt: null,
       serverGenerationTimeMs: null,
+      isOfflineFallback: false,
       collectedEntityIds: [],
       isSceneReady: false,
       isPhysicsReady: false,

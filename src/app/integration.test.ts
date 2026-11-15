@@ -45,7 +45,11 @@ import { useDreamStore } from '../store/useDreamStore';
 import { eventBus } from '../shared/events/eventBus';
 import { soundEngine } from '../sensory/SoundEngine';
 import { speechController } from '../sensory/SpeechController';
-import { DEFAULT_MOCK_WORLD } from '../shared/constants';
+import {
+  DEFAULT_MOCK_WORLD,
+  CYBERPUNK_ROOFTOP_PRESET_WORLD,
+  FLOATING_ISLANDS_PRESET_WORLD,
+} from '../shared/constants';
 import * as controller from '../services/worldGenerationController';
 
 describe('Phase 3 End-to-End Application Integration', () => {
@@ -196,6 +200,47 @@ describe('Phase 3 End-to-End Application Integration', () => {
       expect(logs.length).toBe(1);
       expect(logs[0].stage).toBe('test-stage');
       expect(logs[0].message).toBe('Test diagnostic message');
+    });
+  });
+
+  describe('Group F: Offline Demo Fallback & Predefined Preset Worlds', () => {
+    it('sets isOfflineFallback flag and updates telemetry on offline world loading', () => {
+      const store = useDreamStore.getState();
+      const requestId = 'req-offline-1';
+      store.beginGeneration(requestId);
+
+      const committed = store.setWorld(CYBERPUNK_ROOFTOP_PRESET_WORLD, requestId, 0, true);
+      expect(committed).toBe(true);
+      expect(useDreamStore.getState().isOfflineFallback).toBe(true);
+      expect(useDreamStore.getState().world?.id).toBe(CYBERPUNK_ROOFTOP_PRESET_WORLD.id);
+      expect(useDreamStore.getState().world?.biome).toBe('dark_castle');
+      expect(useDreamStore.getState().world?.mood).toBe('doom');
+
+      // Verify telemetry logged offline demo mode
+      const logs = useDreamStore.getState().telemetryLogs;
+      const responseLog = logs.find((l) => l.stage === 'ai-response-received');
+      expect(responseLog?.message).toContain('[Offline Demo Mode]');
+    });
+
+    it('clears isOfflineFallback upon session reset', () => {
+      const store = useDreamStore.getState();
+      store.setOfflineFallback(true);
+      expect(useDreamStore.getState().isOfflineFallback).toBe(true);
+
+      store.resetSession();
+      expect(useDreamStore.getState().isOfflineFallback).toBe(false);
+      expect(useDreamStore.getState().world).toBeNull();
+    });
+
+    it('seamlessly loads Floating Islands preset with surreal mood and mystical audio', () => {
+      const store = useDreamStore.getState();
+      const requestId = 'req-islands-1';
+      store.beginGeneration(requestId);
+      store.setWorld(FLOATING_ISLANDS_PRESET_WORLD, requestId, 0, true);
+
+      expect(useDreamStore.getState().world?.title).toContain('Floating Archipelago');
+      expect(useDreamStore.getState().world?.biome).toBe('floating_islands');
+      expect(useDreamStore.getState().world?.audioMood).toBe('mystical');
     });
   });
 });

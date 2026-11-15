@@ -11,6 +11,7 @@ export const TopNav: React.FC = () => {
   const isMuted = useDreamStore((state) => state.isMuted);
   const resetSession = useDreamStore((state) => state.resetSession);
   const world = useDreamStore((state) => state.world);
+  const isOfflineFallback = useDreamStore((state) => state.isOfflineFallback);
   const [isArchOpen, setIsArchOpen] = useState(false);
   const [isAudioSuiteOpen, setIsAudioSuiteOpen] = useState(false);
 
@@ -26,7 +27,9 @@ export const TopNav: React.FC = () => {
     if (!isAudioInitialized) {
       await soundEngine.initAudio();
     }
-    useDreamStore.getState().setWorld(DEFAULT_MOCK_WORLD, 'demo_world');
+    const requestId = `offline_req_${Date.now()}`;
+    useDreamStore.getState().beginGeneration(requestId);
+    useDreamStore.getState().setWorld(DEFAULT_MOCK_WORLD, requestId, 0, true);
   };
 
   return (
@@ -62,6 +65,11 @@ export const TopNav: React.FC = () => {
               <span className="text-[10px] font-mono text-indigo-400 px-1.5 py-0.2 rounded bg-indigo-900/60">
                 {world.biome}
               </span>
+              {isOfflineFallback && (
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-950/90 text-amber-300 border border-amber-600/60 animate-pulse">
+                  Offline Demo Mode
+                </span>
+              )}
             </div>
           )}
         </div>
