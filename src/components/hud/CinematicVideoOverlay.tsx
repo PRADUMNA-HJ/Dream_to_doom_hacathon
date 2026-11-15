@@ -13,6 +13,15 @@ export const CinematicVideoOverlay: React.FC = () => {
   const restartCinematic = useDreamStore((state) => state.restartCinematic);
   const resetSession = useDreamStore((state) => state.resetSession);
   const isAudioInitialized = useDreamStore((state) => state.isAudioInitialized);
+  const isMuted = useDreamStore((state) => state.isMuted);
+
+  const handleAudioToggle = async () => {
+    if (!isAudioInitialized) {
+      await soundEngine.initAudio();
+    } else {
+      soundEngine.setMuted(!isMuted);
+    }
+  };
 
   const {
     transcript,
@@ -95,6 +104,20 @@ export const CinematicVideoOverlay: React.FC = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleAudioToggle}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${
+              !isAudioInitialized
+                ? 'bg-amber-950/60 border-amber-800 text-amber-300 hover:bg-amber-900'
+                : isMuted
+                ? 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                : 'bg-emerald-950/60 border-emerald-800 text-emerald-300 hover:bg-emerald-900 shadow-sm'
+            }`}
+            title={!isAudioInitialized ? 'Click to enable Tone.js audio' : isMuted ? 'Unmute Audio' : 'Mute Audio'}
+          >
+            <span>{!isAudioInitialized ? '🔈 Audio' : isMuted ? '🔇 Muted' : '🔊 Sound'}</span>
+          </button>
           <button
             type="button"
             onClick={restartCinematic}

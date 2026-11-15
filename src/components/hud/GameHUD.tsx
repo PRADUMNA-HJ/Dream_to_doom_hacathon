@@ -12,8 +12,8 @@ export const GameHUD: React.FC = () => {
 
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-0 z-20 select-none">
-      {/* Top Header Navigation */}
-      <TopNav />
+      {/* Top Header Navigation (Shown on landing; Video showcase mode has its own sleek cinema header) */}
+      {!world && <TopNav />}
 
       {/* When NO world is loaded: Show the Center Landing Hero Video Studio */}
       {!world && <LandingHero />}

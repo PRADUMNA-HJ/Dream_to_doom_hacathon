@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSpeechInput } from '../../sensory/useSpeechInput';
 import { generateWorldFromTranscript } from '../../services/worldGenerationController';
 import { useDreamStore } from '../../store/useDreamStore';
@@ -53,6 +53,15 @@ export const LandingHero: React.FC = () => {
     setTranscript(sparkText);
     await handleGenerate(sparkText);
   };
+
+  // Support one-click direct demo via URL query parameter (e.g. ?prompt=Cyberpunk+City)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const queryPrompt = params.get('prompt');
+    if (queryPrompt && queryPrompt.trim()) {
+      handleSparkClick(queryPrompt.trim());
+    }
+  }, []);
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center p-4 sm:p-6 pointer-events-auto">
