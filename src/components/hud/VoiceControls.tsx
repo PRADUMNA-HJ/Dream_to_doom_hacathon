@@ -3,7 +3,7 @@ import { useSpeechInput } from '../../sensory/useSpeechInput';
 import { generateWorldFromTranscript } from '../../services/worldGenerationController';
 import { useDreamStore } from '../../store/useDreamStore';
 import { soundEngine } from '../../sensory/SoundEngine';
-import { DEMO_PRESETS } from '../../shared/constants/demoPresets';
+import { DEMO_PRESETS, DEMO_PRESET_WORLDS, DEFAULT_MOCK_WORLD } from '../../shared/constants';
 import { VoiceController } from '../../sensory/components/VoiceController';
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from '../../sensory/types/speech.types';
 
@@ -41,6 +41,18 @@ export const VoiceControls: React.FC = () => {
     setTranscript(promptToSend);
     await generateWorldFromTranscript(promptToSend);
     setTypedInput('');
+  };
+
+  const handlePresetClick = (preset: typeof DEMO_PRESETS[number]) => {
+    if (!isAudioInitialized) {
+      soundEngine.initAudio();
+    }
+    setTranscript(preset.transcript);
+    setTypedInput(preset.transcript);
+    const presetWorld = DEMO_PRESET_WORLDS[preset.id] || DEFAULT_MOCK_WORLD;
+    const requestId = `preset_${Date.now()}`;
+    useDreamStore.getState().beginGeneration(requestId);
+    useDreamStore.getState().setWorld(presetWorld, requestId, 0, true);
   };
 
   return (
@@ -179,7 +191,8 @@ export const VoiceControls: React.FC = () => {
         {DEMO_PRESETS.map((preset) => (
           <button
             key={preset.id}
-            onClick={() => handleGenerate(preset.transcript)}
+            type="button"
+            onClick={() => handlePresetClick(preset)}
             disabled={isGenerating}
             title={preset.description}
             className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-indigo-950 text-slate-300 hover:text-indigo-300 border border-slate-800 hover:border-indigo-700 transition-all cursor-pointer"

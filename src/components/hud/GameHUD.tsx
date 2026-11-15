@@ -6,6 +6,7 @@ import { GenerationLogs } from './GenerationLogs';
 import { LoadingOverlay } from '../feedback/LoadingOverlay';
 import { ErrorOverlay } from '../feedback/ErrorOverlay';
 import { GameOverOverlay } from '../feedback/GameOverOverlay';
+import { TouchControls } from './TouchControls';
 import { useDreamStore } from '../../store/useDreamStore';
 import { eventBus } from '../../shared/events/eventBus';
 
@@ -74,6 +75,7 @@ export const GameHUD: React.FC = () => {
       <LoadingOverlay />
       <ErrorOverlay />
       <GameOverOverlay />
+      <TouchControls />
     </div>
   );
 };
